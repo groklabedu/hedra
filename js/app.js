@@ -331,6 +331,7 @@ function renderizarResultado(scores) {
     requestAnimationFrame(() => {
       renderarMapaHEDRA('canvas-mapa', scores.eixoX, scores.eixoY, scores.perfil);
       renderarDimensoes('canvas-dimensoes', scores);
+      renderarRosquinha('canvas-rosquinha', scores, scores.perfil);
     });
   });
 }

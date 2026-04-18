@@ -1,5 +1,6 @@
 let chartMapa = null;
 let chartDimensoes = null;
+let chartRosquinha = null;
 
 const quadrantPlugin = {
   id: 'quadrantPlugin',
@@ -146,6 +147,69 @@ function renderarDimensoes(canvasId, scores) {
         y: {
           grid: { display: false },
           ticks: { font: { size: 12 } },
+        },
+      },
+    },
+  });
+}
+
+function renderarRosquinha(canvasId, scores, perfil) {
+  const ctx = document.getElementById(canvasId).getContext('2d');
+  if (chartRosquinha) { chartRosquinha.destroy(); chartRosquinha = null; }
+
+  const corPerfil = PERFIS[perfil].cor;
+
+  // Plugin para texto central
+  const centroTextoPlugin = {
+    id: 'centroTexto',
+    afterDraw(chart) {
+      const { ctx, chartArea: { top, bottom, left, right } } = chart;
+      const cx = (left + right) / 2;
+      const cy = (top + bottom) / 2;
+      ctx.save();
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = corPerfil;
+      ctx.font = 'bold 13px system-ui, sans-serif';
+      const nome = PERFIS[perfil].nome.split(' ');
+      // Máx 2 linhas no centro
+      if (nome.length <= 2) {
+        ctx.fillText(nome.join(' '), cx, cy);
+      } else {
+        const meio = Math.ceil(nome.length / 2);
+        ctx.fillText(nome.slice(0, meio).join(' '), cx, cy - 9);
+        ctx.fillText(nome.slice(meio).join(' '), cx, cy + 9);
+      }
+      ctx.restore();
+    },
+  };
+
+  chartRosquinha = new Chart(ctx, {
+    type: 'doughnut',
+    plugins: [centroTextoPlugin],
+    data: {
+      labels: ['Autodomínio', 'Direção', 'Influência', 'Maestria'],
+      datasets: [{
+        data: [scores.autodominio, scores.direcao, scores.influencia, scores.maestria],
+        backgroundColor: ['#CC4400', '#1A5276', '#B7770D', '#1A6B45'],
+        borderColor: '#fff',
+        borderWidth: 3,
+        hoverOffset: 6,
+      }],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '62%',
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: { font: { size: 12 }, padding: 14, usePointStyle: true },
+        },
+        tooltip: {
+          callbacks: {
+            label: (item) => ` ${item.label}: ${item.parsed}%`,
+          },
         },
       },
     },

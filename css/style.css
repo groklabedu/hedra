@@ -426,6 +426,11 @@ textarea { resize: vertical; }
   height: 180px;
 }
 
+.chart-wrapper-donut {
+  position: relative;
+  height: 260px;
+}
+
 /* Dimensões mini-badges */
 .dimensoes-grid {
   display: grid;
