@@ -184,6 +184,8 @@ function renderizarSecao(secao) {
   document.getElementById('btn-avancar').textContent =
     secao < 4 ? 'Próxima parte →' : 'Continuar →';
 
+  atualizarBotaoVoltar();
+
   document.querySelectorAll('.step-indicator').forEach((el, i) => {
     el.classList.toggle('ativo', i + 1 === secao);
     el.classList.toggle('concluido', i + 1 < secao);
@@ -192,7 +194,12 @@ function renderizarSecao(secao) {
   window.scrollTo(0, 0);
 }
 
-// Listener único — gerencia todos os estados via secaoAtual
+function atualizarBotaoVoltar() {
+  const btn = document.getElementById('btn-voltar');
+  btn.style.display = secaoAtual > 1 ? '' : 'none';
+}
+
+// Avançar
 document.getElementById('btn-avancar').addEventListener('click', () => {
   if (secaoAtual < 4) {
     secaoAtual++;
@@ -203,6 +210,19 @@ document.getElementById('btn-avancar').addEventListener('click', () => {
   } else if (secaoAtual === 5) {
     finalizarTeste();
   }
+  atualizarBotaoVoltar();
+});
+
+// Voltar
+document.getElementById('btn-voltar').addEventListener('click', () => {
+  if (secaoAtual === 5) {
+    secaoAtual = 4;
+    renderizarSecao(4);
+  } else if (secaoAtual > 1) {
+    secaoAtual--;
+    renderizarSecao(secaoAtual);
+  }
+  atualizarBotaoVoltar();
 });
 
 // ─── Pergunta aberta ────────────────────────────────────────────────────────
