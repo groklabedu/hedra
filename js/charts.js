@@ -97,7 +97,7 @@ function renderarMapaHEDRA(canvasId, eixoX, eixoY, perfil) {
         },
         y: {
           min: 0, max: 100,
-          title: { display: true, text: '→ Impacto', font: { size: 11 } },
+          title: { display: true, text: 'Impacto →', font: { size: 11 } },
           grid: { color: 'rgba(0,0,0,0.05)' },
           ticks: { maxTicksLimit: 6 },
         },
