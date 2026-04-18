@@ -101,6 +101,64 @@
       color: #666;
     }
 
+    /* Checkbox de seleção */
+    .col-check { width: 36px; text-align: center !important; }
+    .col-check input[type="checkbox"] {
+      width: 16px; height: 16px; cursor: pointer; accent-color: var(--cor-principal);
+    }
+    thead .col-check input[type="checkbox"] { accent-color: #fff; }
+
+    /* Botão de lixeira */
+    .col-acoes { width: 40px; text-align: center !important; }
+    .btn-lixeira {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px 6px;
+      border-radius: 6px;
+      color: #bbb;
+      font-size: 1rem;
+      line-height: 1;
+      transition: color 0.15s, background 0.15s;
+    }
+    .btn-lixeira:hover { color: #CC2200; background: #FFF0EE; }
+
+    /* Barra de ações em massa */
+    #barra-selecao {
+      display: none;
+      align-items: center;
+      gap: 12px;
+      background: #FFF8EE;
+      border: 1px solid var(--cor-dourada);
+      border-radius: 8px;
+      padding: 10px 16px;
+      margin-top: 12px;
+      font-size: 0.9rem;
+    }
+    #barra-selecao.visivel { display: flex; }
+    #barra-selecao span { flex: 1; color: #555; }
+    #btn-excluir-selecionados {
+      background: #CC2200;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 7px 14px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    #btn-excluir-selecionados:hover { opacity: 0.85; }
+    #btn-cancelar-selecao {
+      background: none;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      padding: 7px 12px;
+      font-size: 0.85rem;
+      color: #666;
+      cursor: pointer;
+    }
+
     /* Filtros */
     .filtros-wrapper {
       display: flex;
@@ -224,10 +282,18 @@
             <option value="lider">Líder de Influência Estratégica</option>
           </select>
         </div>
+        <!-- Barra de ações em massa -->
+        <div id="barra-selecao">
+          <span id="texto-selecao">0 registros selecionados</span>
+          <button id="btn-cancelar-selecao">Cancelar</button>
+          <button id="btn-excluir-selecionados">🗑 Excluir selecionados</button>
+        </div>
+
         <div class="tabela-wrapper">
           <table>
             <thead>
               <tr>
+                <th class="col-check"><input type="checkbox" id="check-todos" title="Selecionar todos"></th>
                 <th>Data</th>
                 <th>Nome</th>
                 <th>E-mail</th>
@@ -236,10 +302,11 @@
                 <th>Perfil</th>
                 <th>X / Y</th>
                 <th>Reflexão</th>
+                <th class="col-acoes"></th>
               </tr>
             </thead>
             <tbody id="tabela-corpo">
-              <tr><td colspan="8" style="text-align:center;padding:20px;color:#aaa">Aguardando dados…</td></tr>
+              <tr><td colspan="10" style="text-align:center;padding:20px;color:#aaa">Aguardando dados…</td></tr>
             </tbody>
           </table>
         </div>

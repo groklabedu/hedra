@@ -71,6 +71,7 @@ async function carregarDados() {
       };
     });
 
+    limparSelecao();
     renderizarPainel();
   } catch (err) {
     status.textContent = 'Erro de conexão. Verifique a URL e tente novamente.';
@@ -141,15 +142,24 @@ function renderizarTabela(dados) {
   const tbody = document.getElementById('tabela-corpo');
   tbody.innerHTML = '';
 
+  // Resetar checkbox "selecionar todos"
+  const checkTodos = document.getElementById('check-todos');
+  if (checkTodos) checkTodos.checked = false;
+
   if (dados.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:1rem;">Nenhum registro encontrado.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:1rem;">Nenhum registro encontrado.</td></tr>';
     return;
   }
 
   dados.forEach((d) => {
     const dataStr = d.data ? new Date(d.data).toLocaleDateString('pt-BR') : '—';
+    const emailSafe = (d.email || '').toLowerCase();
     const tr = document.createElement('tr');
+    tr.dataset.email = emailSafe;
     tr.innerHTML = `
+      <td class="col-check">
+        <input type="checkbox" class="check-linha" data-email="${emailSafe}" title="Selecionar">
+      </td>
       <td>${dataStr}</td>
       <td>${d.nome}</td>
       <td>${d.email}</td>
@@ -162,9 +172,98 @@ function renderizarTabela(dados) {
       </td>
       <td>${Number(d.eixoX).toFixed(0)} / ${Number(d.eixoY).toFixed(0)}</td>
       <td class="resposta-aberta" title="${(d.respostaAberta || '').replace(/"/g, '&quot;')}">${d.respostaAberta || '—'}</td>
+      <td class="col-acoes">
+        <button class="btn-lixeira" data-email="${emailSafe}" title="Excluir este registro">🗑</button>
+      </td>
     `;
     tbody.appendChild(tr);
   });
+
+  // Listeners das caixas de linha
+  tbody.querySelectorAll('.check-linha').forEach((cb) => {
+    cb.addEventListener('change', atualizarBarraSelecao);
+  });
+
+  // Listeners dos botões de lixeira individuais
+  tbody.querySelectorAll('.btn-lixeira').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const email = btn.dataset.email;
+      const nome  = dadosAdmin.find((d) => d.email.toLowerCase() === email)?.nome || email;
+      confirmarExclusao([email], `Excluir o registro de "${nome}"?`);
+    });
+  });
+}
+
+// ─── Seleção e exclusão ──────────────────────────────────────────────────────
+
+function atualizarBarraSelecao() {
+  const selecionados = document.querySelectorAll('.check-linha:checked');
+  const barra = document.getElementById('barra-selecao');
+  const texto = document.getElementById('texto-selecao');
+
+  if (selecionados.length > 0) {
+    barra.classList.add('visivel');
+    texto.textContent = `${selecionados.length} registro${selecionados.length > 1 ? 's' : ''} selecionado${selecionados.length > 1 ? 's' : ''}`;
+  } else {
+    barra.classList.remove('visivel');
+  }
+
+  // Atualizar estado do "selecionar todos"
+  const total = document.querySelectorAll('.check-linha').length;
+  const checkTodos = document.getElementById('check-todos');
+  if (checkTodos) {
+    checkTodos.checked = selecionados.length === total && total > 0;
+    checkTodos.indeterminate = selecionados.length > 0 && selecionados.length < total;
+  }
+}
+
+function limparSelecao() {
+  document.querySelectorAll('.check-linha:checked').forEach((cb) => { cb.checked = false; });
+  const checkTodos = document.getElementById('check-todos');
+  if (checkTodos) { checkTodos.checked = false; checkTodos.indeterminate = false; }
+  document.getElementById('barra-selecao').classList.remove('visivel');
+}
+
+// Checkbox "selecionar todos"
+document.getElementById('check-todos').addEventListener('change', (e) => {
+  document.querySelectorAll('.check-linha').forEach((cb) => { cb.checked = e.target.checked; });
+  atualizarBarraSelecao();
+});
+
+// Botão cancelar seleção
+document.getElementById('btn-cancelar-selecao').addEventListener('click', limparSelecao);
+
+// Botão excluir selecionados
+document.getElementById('btn-excluir-selecionados').addEventListener('click', () => {
+  const emails = [...document.querySelectorAll('.check-linha:checked')].map((cb) => cb.dataset.email);
+  if (emails.length === 0) return;
+  confirmarExclusao(emails, `Excluir ${emails.length} registro${emails.length > 1 ? 's' : ''} selecionado${emails.length > 1 ? 's' : ''}?`);
+});
+
+async function confirmarExclusao(emails, mensagem) {
+  if (!confirm(`${mensagem}\n\nEssa ação não pode ser desfeita.`)) return;
+
+  const status = document.getElementById('status-carregando');
+  status.textContent = 'Excluindo…';
+
+  try {
+    const res = await fetch(ADMIN_APPS_SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'deleteRows', key: ADMIN_KEY, emails }),
+    });
+    const json = await res.json();
+
+    if (json.status === 'ok') {
+      status.textContent = `${json.deleted} registro${json.deleted !== 1 ? 's' : ''} excluído${json.deleted !== 1 ? 's' : ''}.`;
+      setTimeout(() => { status.textContent = ''; }, 3000);
+      await carregarDados(); // recarregar tudo do servidor
+    } else {
+      status.textContent = 'Erro ao excluir: ' + (json.message || json.status);
+    }
+  } catch (err) {
+    status.textContent = 'Erro de conexão ao excluir.';
+    console.error(err);
+  }
 }
 
 // ─── Busca e filtro ──────────────────────────────────────────────────────────

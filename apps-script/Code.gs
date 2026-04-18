@@ -18,6 +18,29 @@ function doPost(e) {
     const data  = JSON.parse(e.postData.contents);
     const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
 
+    // ── Exclusão de registros (admin) ───────────────────────────────────────
+    if (data.action === 'deleteRows') {
+      if (data.key !== ADMIN_KEY) return resp({ status: 'unauthorized' });
+
+      const emails  = (data.emails || []).map((em) => (em || '').toString().toLowerCase());
+      const lastRow = sheet.getLastRow();
+      if (lastRow < 2 || emails.length === 0) return resp({ status: 'ok', deleted: 0 });
+
+      const colEmails = sheet.getRange(2, 3, lastRow - 1, 1).getValues().flat();
+      let deleted = 0;
+
+      // Percorrer de baixo para cima para não deslocar os índices
+      for (let i = colEmails.length - 1; i >= 0; i--) {
+        if (emails.includes((colEmails[i] || '').toString().toLowerCase())) {
+          sheet.deleteRow(i + 2); // +2: base 1 + linha de cabeçalho
+          deleted++;
+        }
+      }
+
+      return resp({ status: 'ok', deleted });
+    }
+
+    // ── Inserção / substituição de resultado ────────────────────────────────
     const lastRow = sheet.getLastRow();
     if (lastRow > 1) {
       const emails = sheet.getRange(2, 3, lastRow - 1, 1).getValues().flat();
