@@ -53,11 +53,24 @@
             <input type="text" id="campo-unidade" placeholder="Ex: Filial SP, Unidade Norte…" required>
           </div>
 
-          <div id="msg-duplicado" class="alerta alerta-erro oculto">
-            Você já realizou este inventário. Cada participante pode responder apenas uma vez.
+          <div id="msg-campos-obrigatorios" class="alerta alerta-erro oculto">
+            Preencha todos os campos obrigatórios antes de continuar.
           </div>
 
-          <button type="submit" class="btn btn-primario" style="margin-top:8px">
+          <div id="msg-duplicado" class="alerta alerta-erro oculto">
+            Este e-mail já realizou o inventário.
+          </div>
+
+          <div id="opcoes-duplicado" class="oculto" style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
+            <button type="button" class="btn btn-secundario" id="btn-ver-resultado">
+              Ver meu resultado anterior
+            </button>
+            <button type="button" class="btn btn-primario" id="btn-refazer">
+              Refazer o teste (substitui o resultado anterior)
+            </button>
+          </div>
+
+          <button type="submit" class="btn btn-primario" id="btn-iniciar" style="margin-top:8px">
             Iniciar inventário →
           </button>
         </form>

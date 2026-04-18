@@ -502,6 +502,54 @@ textarea { resize: vertical; }
   text-transform: uppercase;
 }
 
+/* ── Validação de campos ────────────────────────────────────────────────── */
+.campo-erro {
+  border-color: #CC2200 !important;
+  background: #FFF8F8 !important;
+}
+
+/* ── Quadrantes preview (pergunta aberta) ───────────────────────────────── */
+.quadrantes-preview {
+  margin: 4px 0 8px;
+}
+
+.qp-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  border: 1.5px solid var(--cor-borda);
+  border-radius: 8px;
+  padding: 6px;
+  background: #FAFAFA;
+}
+
+.qp-cell {
+  border: 1.5px solid;
+  border-radius: 6px;
+  padding: 10px 8px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-align: center;
+  line-height: 1.4;
+  background: #fff;
+}
+
+.qp-eixo-y {
+  font-size: 0.72rem;
+  color: #999;
+  text-align: left;
+  margin-bottom: 4px;
+  padding-left: 4px;
+}
+
+.qp-eixo-x {
+  font-size: 0.72rem;
+  color: #999;
+  text-align: right;
+  margin-top: 4px;
+  padding-right: 4px;
+}
+
 /* ── Responsivo tablet/desktop ───────────────────────────────────────────── */
 @media (min-width: 520px) {
   .container { padding: 0 24px 48px; }

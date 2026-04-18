@@ -49,22 +49,27 @@ async function carregarDados() {
     status.textContent = '';
     const linhas = json.data;
     // Linha 0 = cabeçalhos; dados a partir da linha 1
-    dadosAdmin = linhas.slice(1).map((row) => ({
-      data:      row[0],
-      nome:      row[1],
-      email:     row[2],
-      cargo:     row[3],
-      area:      row[4],
-      unidade:   row[5],
-      autodominio: row[6],
-      direcao:   row[7],
-      influencia: row[8],
-      maestria:  row[9],
-      eixoX:     row[10],
-      eixoY:     row[11],
-      perfil:    row[12],
-      respostaAberta: row[13],
-    }));
+    dadosAdmin = linhas.slice(1).map((row) => {
+      const p = resolverPerfil(row[12] || '');
+      return {
+        data:      row[0],
+        nome:      row[1],
+        email:     row[2],
+        cargo:     row[3],
+        area:      row[4],
+        unidade:   row[5],
+        autodominio: row[6],
+        direcao:   row[7],
+        influencia: row[8],
+        maestria:  row[9],
+        eixoX:     row[10],
+        eixoY:     row[11],
+        perfil:    p.key,
+        perfilNome: p.nome,
+        perfilCor:  p.cor,
+        respostaAberta: row[13],
+      };
+    });
 
     renderizarPainel();
   } catch (err) {
@@ -76,11 +81,19 @@ async function carregarDados() {
 // ─── Renderizar painel ───────────────────────────────────────────────────────
 
 const PERFIS_LABELS = {
-  operador:    { nome: 'Operador Sobrecarregado',       cor: '#CC4400' },
-  executor:    { nome: 'Executor Eficiente',            cor: '#1A5276' },
-  comunicador: { nome: 'Comunicador Frágil',            cor: '#B7770D' },
+  operador:    { nome: 'Operador Sobrecarregado',         cor: '#CC4400' },
+  executor:    { nome: 'Executor Eficiente',              cor: '#1A5276' },
+  comunicador: { nome: 'Comunicador Frágil',              cor: '#B7770D' },
   lider:       { nome: 'Líder de Influência Estratégica', cor: '#1A6B45' },
 };
+
+// Suporta tanto chave quanto nome completo vindo da planilha
+function resolverPerfil(valor) {
+  if (PERFIS_LABELS[valor]) return { key: valor, ...PERFIS_LABELS[valor] };
+  const entry = Object.entries(PERFIS_LABELS).find(([, v]) => v.nome === valor);
+  if (entry) return { key: entry[0], ...entry[1] };
+  return { key: valor, nome: valor, cor: '#555' };
+}
 
 function renderizarPainel(filtro = 'todos') {
   const dados = filtro === 'todos'
@@ -134,7 +147,6 @@ function renderizarTabela(dados) {
   }
 
   dados.forEach((d) => {
-    const info = PERFIS_LABELS[d.perfil] || { nome: d.perfil, cor: '#555' };
     const dataStr = d.data ? new Date(d.data).toLocaleDateString('pt-BR') : '—';
     const tr = document.createElement('tr');
     tr.innerHTML = `
@@ -144,8 +156,8 @@ function renderizarTabela(dados) {
       <td>${d.cargo}</td>
       <td>${d.unidade}</td>
       <td>
-        <span class="badge-perfil" style="background:${info.cor}20;color:${info.cor};border:1px solid ${info.cor}40">
-          ${info.nome}
+        <span class="badge-perfil" style="background:${d.perfilCor}20;color:${d.perfilCor};border:1px solid ${d.perfilCor}40">
+          ${d.perfilNome}
         </span>
       </td>
       <td>${Number(d.eixoX).toFixed(0)} / ${Number(d.eixoY).toFixed(0)}</td>
