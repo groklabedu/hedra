@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="description" content="Inventário HEDRA — Matriz de Maturidade da Liderança">
+  <title>Inventário HEDRA</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <header>
+    <img src="assets/logo-horizontal.png" alt="Asséssor Consultoria" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'header-placeholder',textContent:'Asséssor Consultoria e Treinamento'}))">
+  </header>
+
+  <!-- ════════════════════════════════════════════════════════ TELA 1 ════ -->
+  <div id="tela-identificacao" class="tela ativa">
+    <div class="container">
+
+      <div class="intro-box">
+        <span class="intro-badge">Inventário de Liderança</span>
+        <h1 class="hedra-titulo">HEDRA</h1>
+        <p class="hedra-subtitulo">Matriz de Maturidade da Liderança</p>
+      </div>
+
+      <div class="card">
+        <h2>Suas informações</h2>
+        <p class="subtitulo">Preencha os campos abaixo para iniciar o inventário.</p>
+
+        <form id="form-identificacao" novalidate>
+          <div class="campo-grupo">
+            <label for="campo-nome">Nome completo *</label>
+            <input type="text" id="campo-nome" placeholder="Seu nome completo" required autocomplete="name">
+          </div>
+
+          <div class="campo-grupo">
+            <label for="campo-email">E-mail *</label>
+            <input type="email" id="campo-email" placeholder="seu@email.com" required autocomplete="email">
+          </div>
+
+          <div class="campo-grupo">
+            <label for="campo-cargo">Cargo *</label>
+            <input type="text" id="campo-cargo" placeholder="Ex: Gerente de Projetos" required>
+          </div>
+
+          <div class="campo-grupo">
+            <label for="campo-area">Área *</label>
+            <input type="text" id="campo-area" placeholder="Ex: Operações, Comercial…" required>
+          </div>
+
+          <div class="campo-grupo">
+            <label for="campo-unidade">Unidade de negócio *</label>
+            <input type="text" id="campo-unidade" placeholder="Ex: Filial SP, Unidade Norte…" required>
+          </div>
+
+          <div id="msg-duplicado" class="alerta alerta-erro oculto">
+            Você já realizou este inventário. Cada participante pode responder apenas uma vez.
+          </div>
+
+          <button type="submit" class="btn btn-primario" style="margin-top:8px">
+            Iniciar inventário →
+          </button>
+        </form>
+      </div>
+
+    </div>
+  </div>
+  <!-- ════════════════════════════════════════════════════════ TELA 2 ════ -->
+  <div id="tela-teste" class="tela">
+    <div class="container">
+
+      <!-- Indicadores de etapa -->
+      <div class="steps-wrapper" style="margin-top:16px">
+        <div class="step-indicator ativo" id="step-1">1</div>
+        <div class="step-indicator"       id="step-2">2</div>
+        <div class="step-indicator"       id="step-3">3</div>
+        <div class="step-indicator"       id="step-4">4</div>
+      </div>
+
+      <!-- Barra de progresso global -->
+      <div class="progresso-wrapper">
+        <div class="progresso-header">
+          <span>Progresso geral</span>
+          <span id="progresso-texto">0 / 40</span>
+        </div>
+        <div class="progresso-track">
+          <div class="progresso-fill" id="progresso-barra"></div>
+        </div>
+      </div>
+
+      <!-- Instrução -->
+      <div class="instrucao-box">
+        Responda considerando <strong>como você realmente lidera hoje</strong>.
+        Use a escala de 0 a 10: <strong>0 = nunca acontece</strong> · <strong>5 = às vezes</strong> · <strong>10 = acontece sempre</strong>.
+      </div>
+
+      <!-- Cabeçalho da seção -->
+      <div class="secao-header">
+        <h2 id="secao-titulo">Parte 1 de 4 — Autodomínio</h2>
+        <p id="secao-descricao"></p>
+      </div>
+
+      <!-- Perguntas (renderizadas pelo JS) -->
+      <div id="perguntas-container"></div>
+
+      <button class="btn btn-primario" id="btn-avancar" style="margin-top:8px">
+        Próxima parte →
+      </button>
+
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════ TELA 3 ════ -->
+  <div id="tela-resultado" class="tela">
+
+    <!-- Área exportável (sem position fixed/sticky) -->
+    <div id="resultado-exportavel">
+
+      <!-- Logo para a exportação -->
+      <div class="resultado-header-exportavel">
+        <img src="assets/logo-vertical.png" alt="Asséssor" onerror="this.style.display='none'">
+        <p style="font-size:0.75rem;color:#888;margin-top:4px">Inventário HEDRA — Matriz de Maturidade da Liderança</p>
+      </div>
+
+      <div style="padding:0 16px">
+
+        <!-- Perfil -->
+        <div class="card secao-resultado" style="margin-top:0">
+          <h3>Seu perfil de liderança</h3>
+          <p class="perfil-nome" id="perfil-nome"></p>
+          <p class="perfil-descricao" id="perfil-descricao"></p>
+        </div>
+
+        <!-- Mapa HEDRA -->
+        <div class="card secao-resultado">
+          <h3>Mapa HEDRA</h3>
+          <div class="chart-wrapper">
+            <canvas id="canvas-mapa"></canvas>
+          </div>
+        </div>
+
+        <!-- Dimensões -->
+        <div class="card secao-resultado">
+          <h3>Composição das dimensões</h3>
+
+          <div class="dimensoes-grid">
+            <div class="dimensao-badge">
+              <span class="d-label">Autodomínio</span>
+              <span class="d-valor" id="pct-autodominio">—</span>
+            </div>
+            <div class="dimensao-badge">
+              <span class="d-label">Direção</span>
+              <span class="d-valor" id="pct-direcao">—</span>
+            </div>
+            <div class="dimensao-badge">
+              <span class="d-label">Influência</span>
+              <span class="d-valor" id="pct-influencia">—</span>
+            </div>
+            <div class="dimensao-badge">
+              <span class="d-label">Maestria</span>
+              <span class="d-valor" id="pct-maestria">—</span>
+            </div>
+          </div>
+
+          <div class="chart-wrapper-bar">
+            <canvas id="canvas-dimensoes"></canvas>
+          </div>
+        </div>
+
+        <!-- Fechamento -->
+        <div class="card secao-resultado">
+          <div class="fechamento-box">
+            Lembre-se: A liderança não é fixa, é evolutiva! Seu resultado não define quem você é como líder — ele revela como você está liderando hoje. E liderança é construída diariamente, nas escolhas que você faz a partir dessa consciência.
+          </div>
+        </div>
+
+      </div><!-- /padding wrapper -->
+    </div><!-- /#resultado-exportavel -->
+
+    <!-- Botões fora da área de captura -->
+    <div class="botoes-exportar">
+      <button class="btn btn-secundario" id="btn-exportar-png">
+        Salvar como imagem (PNG)
+      </button>
+      <button class="btn btn-dourado" id="btn-exportar-pdf">
+        Salvar como PDF
+      </button>
+    </div>
+
+  </div><!-- /tela-resultado -->
+
+  <!-- CDNs -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <!-- App -->
+  <script src="js/questions.js"></script>
+  <script src="js/scoring.js"></script>
+  <script src="js/charts.js"></script>
+  <script src="js/export.js"></script>
+  <script src="js/app.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Painel Admin — HEDRA</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    /* ── Admin-specific ─────────────────────────────────────────────────── */
+    .admin-container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 20px 60px;
+    }
+
+    .painel-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 0;
+    }
+
+    @media (max-width: 600px) {
+      .painel-grid { grid-template-columns: 1fr; }
+    }
+
+    .stat-card {
+      background: #fff;
+      border: 1px solid var(--cor-borda);
+      border-radius: var(--raio);
+      padding: 20px;
+      text-align: center;
+    }
+
+    .stat-numero {
+      font-size: 2.4rem;
+      font-weight: 800;
+      color: var(--cor-principal);
+      line-height: 1;
+    }
+
+    .stat-label {
+      font-size: 0.8rem;
+      color: #777;
+      margin-top: 4px;
+    }
+
+    .perfis-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .perfil-count {
+      background: #fff;
+      border: 1px solid var(--cor-borda);
+      border-radius: 8px;
+      padding: 10px;
+      text-align: center;
+    }
+
+    .perfil-count .p-num { font-size: 1.4rem; font-weight: 800; }
+    .perfil-count .p-nome { font-size: 0.72rem; color: #666; line-height: 1.3; }
+
+    /* Tabela */
+    .tabela-wrapper {
+      overflow-x: auto;
+      margin-top: 12px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+      min-width: 700px;
+    }
+
+    thead { background: var(--cor-principal); color: #fff; }
+    thead th { padding: 10px 12px; text-align: left; font-weight: 600; white-space: nowrap; }
+
+    tbody tr:nth-child(even) { background: #FAFAFA; }
+    tbody tr:hover { background: #F0E8E8; }
+    tbody td { padding: 9px 12px; border-bottom: 1px solid var(--cor-borda); vertical-align: top; }
+
+    .badge-perfil {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .resposta-aberta {
+      max-width: 200px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-size: 0.8rem;
+      color: #666;
+    }
+
+    /* Filtros */
+    .filtros-wrapper {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .filtros-wrapper input,
+    .filtros-wrapper select {
+      flex: 1;
+      min-width: 160px;
+      padding: 9px 12px;
+      font-size: 0.9rem;
+    }
+
+    /* Status carregando */
+    #status-carregando {
+      color: #888;
+      font-size: 0.9rem;
+      padding: 4px 0;
+    }
+
+    /* Login */
+    #tela-login {
+      max-width: 360px;
+      margin: 60px auto;
+      padding: 0 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <img src="assets/logo-horizontal.png" alt="Asséssor" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'header-placeholder',textContent:'Asséssor — Painel Admin'}))">
+  </header>
+
+  <!-- ── Login ──────────────────────────────────────────────────────────── -->
+  <div id="tela-login">
+    <div class="card">
+      <h2 style="margin-bottom:16px">Acesso restrito</h2>
+      <div class="campo-grupo">
+        <label for="campo-senha">Senha de acesso</label>
+        <input type="password" id="campo-senha" placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <div id="msg-erro-login" class="alerta alerta-erro oculto">
+        Senha incorreta. Tente novamente.
+      </div>
+      <button class="btn btn-primario" id="btn-login" style="margin-top:8px">Entrar</button>
+    </div>
+  </div>
+
+  <!-- ── Painel ─────────────────────────────────────────────────────────── -->
+  <div id="tela-painel" class="oculto">
+    <div class="admin-container">
+
+      <div style="display:flex;align-items:center;justify-content:space-between;margin:20px 0 16px;flex-wrap:wrap;gap:10px">
+        <h1 style="font-size:1.2rem">Painel de Resultados — HEDRA</h1>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-secundario btn-sm" id="btn-atualizar">↺ Atualizar</button>
+          <button class="btn btn-dourado btn-sm" id="btn-exportar-csv">Exportar CSV</button>
+        </div>
+      </div>
+
+      <span id="status-carregando"></span>
+
+      <!-- Cards de resumo -->
+      <div class="painel-grid">
+        <div class="stat-card">
+          <div class="stat-numero" id="total-participantes">—</div>
+          <div class="stat-label">Total de participantes</div>
+        </div>
+
+        <div class="stat-card">
+          <h3 style="font-size:0.8rem;color:#888;margin-bottom:10px">Por perfil</h3>
+          <div class="perfis-grid">
+            <div class="perfil-count">
+              <div class="p-num" style="color:#CC4400" id="count-operador">0</div>
+              <div class="p-nome">Operador Sobrecarregado</div>
+            </div>
+            <div class="perfil-count">
+              <div class="p-num" style="color:#1A5276" id="count-executor">0</div>
+              <div class="p-nome">Executor Eficiente</div>
+            </div>
+            <div class="perfil-count">
+              <div class="p-num" style="color:#B7770D" id="count-comunicador">0</div>
+              <div class="p-nome">Comunicador Frágil</div>
+            </div>
+            <div class="perfil-count">
+              <div class="p-num" style="color:#1A6B45" id="count-lider">0</div>
+              <div class="p-nome">Líder de Influência</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pizza e unidades -->
+      <div class="painel-grid" style="margin-top:16px">
+        <div class="card" style="margin-top:0">
+          <h3>Distribuição por perfil</h3>
+          <div style="position:relative;height:220px;margin-top:12px">
+            <canvas id="canvas-pizza"></canvas>
+          </div>
+        </div>
+        <div class="card" style="margin-top:0">
+          <h3>Por unidade de negócio</h3>
+          <ul id="lista-unidades" style="list-style:none;margin-top:10px;font-size:0.9rem;line-height:2"></ul>
+        </div>
+      </div>
+
+      <!-- Tabela -->
+      <div class="card" style="margin-top:16px">
+        <h3 style="margin-bottom:12px">Todos os registros</h3>
+        <div class="filtros-wrapper">
+          <input type="text" id="campo-busca" placeholder="Buscar por nome, e-mail, cargo…">
+          <select id="filtro-perfil">
+            <option value="todos">Todos os perfis</option>
+            <option value="operador">Operador Sobrecarregado</option>
+            <option value="executor">Executor Eficiente</option>
+            <option value="comunicador">Comunicador Frágil</option>
+            <option value="lider">Líder de Influência Estratégica</option>
+          </select>
+        </div>
+        <div class="tabela-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Nome</th>
+                <th>E-mail</th>
+                <th>Cargo</th>
+                <th>Unidade</th>
+                <th>Perfil</th>
+                <th>X / Y</th>
+                <th>Reflexão</th>
+              </tr>
+            </thead>
+            <tbody id="tabela-corpo">
+              <tr><td colspan="8" style="text-align:center;padding:20px;color:#aaa">Aguardando dados…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div><!-- /tela-painel -->
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <script src="js/charts.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>
