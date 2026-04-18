@@ -50,14 +50,8 @@ document.getElementById('form-identificacao').addEventListener('submit', async (
   document.getElementById('msg-duplicado').classList.add('oculto');
   document.getElementById('opcoes-duplicado').classList.add('oculto');
 
-  // 1. Verificar localStorage
+  // Verificar localStorage e servidor
   const jaFez = JSON.parse(localStorage.getItem('hedra_participantes') || '[]');
-  if (jaFez.includes(email)) {
-    mostrarOpcoesDuplicado(email, null);
-    return;
-  }
-
-  // 2. Verificar no servidor
   const btnSubmit = e.target.querySelector('button[type="submit"]');
   btnSubmit.textContent = 'Verificando…';
   btnSubmit.disabled = true;
@@ -69,8 +63,17 @@ document.getElementById('form-identificacao').addEventListener('submit', async (
       mostrarOpcoesDuplicado(email, json.data);
       return;
     }
+    // Não está no servidor; se estava no localStorage, limpar entrada obsoleta
+    if (jaFez.includes(email)) {
+      const atualizado = jaFez.filter((e) => e !== email);
+      localStorage.setItem('hedra_participantes', JSON.stringify(atualizado));
+    }
   } catch (_) {
-    // Falha na verificação: prosseguir normalmente
+    // Falha na conexão: usar localStorage como fallback
+    if (jaFez.includes(email)) {
+      mostrarOpcoesDuplicado(email, null);
+      return;
+    }
   } finally {
     btnSubmit.textContent = 'Iniciar inventário →';
     btnSubmit.disabled = false;
