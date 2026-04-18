@@ -502,6 +502,16 @@ textarea { resize: vertical; }
   text-transform: uppercase;
 }
 
+/* ── Texto introdutório ─────────────────────────────────────────────────── */
+.intro-texto {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: #333;
+}
+
 /* ── Validação de campos ────────────────────────────────────────────────── */
 .campo-erro {
   border-color: #CC2200 !important;
