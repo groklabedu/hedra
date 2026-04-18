@@ -154,65 +154,110 @@ function renderarDimensoes(canvasId, scores) {
 }
 
 function renderarRosquinha(canvasId, scores, perfil) {
-  const ctx = document.getElementById(canvasId).getContext('2d');
+  // Limpar instância Chart.js anterior se existir
   if (chartRosquinha) { chartRosquinha.destroy(); chartRosquinha = null; }
 
-  const corPerfil = PERFIS[perfil].cor;
+  const canvas = document.getElementById(canvasId);
+  const dpr    = window.devicePixelRatio || 1;
+  const size   = canvas.clientWidth || 280;
 
-  // Plugin para texto central
-  const centroTextoPlugin = {
-    id: 'centroTexto',
-    afterDraw(chart) {
-      const { ctx, chartArea: { top, bottom, left, right } } = chart;
-      const cx = (left + right) / 2;
-      const cy = (top + bottom) / 2;
+  // Canvas quadrado
+  canvas.style.height = size + 'px';
+  canvas.width  = size * dpr;
+  canvas.height = size * dpr;
+
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, size, size);
+
+  const cx  = size / 2;
+  const cy  = size / 2;
+  const R   = size * 0.41;   // raio externo
+  const GAP = 0.07;           // espaço entre segmentos (radianos)
+
+  // MIN = espessura mínima (score 0%), MAX = espessura máxima (score 100%)
+  const MIN_T = 0.12;
+  const MAX_T = 0.74;
+
+  // Mapeamento: cada quadrante → dimensão correspondente
+  // Posições no círculo: topo-esq, topo-dir, baixo-dir, baixo-esq
+  const segmentos = [
+    { score: scores.influencia,  color: '#B7770D', label: 'Influência',  start: -Math.PI      }, // topo-esq
+    { score: scores.maestria,    color: '#1A6B45', label: 'Maestria',    start: -Math.PI / 2  }, // topo-dir
+    { score: scores.direcao,     color: '#1A5276', label: 'Direção',     start: 0             }, // baixo-dir
+    { score: scores.autodominio, color: '#CC4400', label: 'Autodomínio', start: Math.PI / 2   }, // baixo-esq
+  ];
+
+  segmentos.forEach(({ score, color, label, start }) => {
+    const end      = start + Math.PI / 2;
+    const espessura = (MIN_T + (MAX_T - MIN_T) * (score / 100)) * R;
+    const innerR   = Math.max(R - espessura, 2);
+    const midAngle = start + Math.PI / 4;
+    const midR     = (R + innerR) / 2;
+
+    // Arco com espessura variável
+    ctx.beginPath();
+    ctx.arc(cx, cy, R,      start + GAP, end - GAP, false);
+    ctx.arc(cx, cy, innerR, end   - GAP, start + GAP, true);
+    ctx.closePath();
+    ctx.fillStyle = color;
+    ctx.fill();
+
+    // Score no meio do arco (só se houver espaço)
+    if (espessura > R * 0.22) {
       ctx.save();
+      ctx.fillStyle = '#fff';
+      ctx.font = `bold ${Math.round(size * 0.038)}px system-ui, sans-serif`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillStyle = corPerfil;
-      ctx.font = 'bold 13px system-ui, sans-serif';
-      const nome = PERFIS[perfil].nome.split(' ');
-      // Máx 2 linhas no centro
-      if (nome.length <= 2) {
-        ctx.fillText(nome.join(' '), cx, cy);
-      } else {
-        const meio = Math.ceil(nome.length / 2);
-        ctx.fillText(nome.slice(0, meio).join(' '), cx, cy - 9);
-        ctx.fillText(nome.slice(meio).join(' '), cx, cy + 9);
-      }
+      ctx.fillText(Math.round(score) + '%',
+        cx + midR * Math.cos(midAngle),
+        cy + midR * Math.sin(midAngle));
       ctx.restore();
-    },
-  };
+    }
+  });
 
-  chartRosquinha = new Chart(ctx, {
-    type: 'doughnut',
-    plugins: [centroTextoPlugin],
-    data: {
-      labels: ['Autodomínio', 'Direção', 'Influência', 'Maestria'],
-      datasets: [{
-        data: [scores.autodominio, scores.direcao, scores.influencia, scores.maestria],
-        backgroundColor: ['#CC4400', '#1A5276', '#B7770D', '#1A6B45'],
-        borderColor: '#fff',
-        borderWidth: 3,
-        hoverOffset: 6,
-      }],
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      cutout: '62%',
-      plugins: {
-        legend: {
-          position: 'bottom',
-          labels: { font: { size: 12 }, padding: 14, usePointStyle: true },
-        },
-        tooltip: {
-          callbacks: {
-            label: (item) => ` ${item.label}: ${item.parsed}%`,
-          },
-        },
-      },
-    },
+  // Nome do perfil no centro
+  const nome     = PERFIS[perfil].nome;
+  const corNome  = PERFIS[perfil].cor;
+  const palavras = nome.split(' ');
+  const linhas   = [];
+  for (let i = 0; i < palavras.length; i += 2) {
+    linhas.push(palavras.slice(i, i + 2).join(' '));
+  }
+
+  const fs = Math.round(size * 0.042);
+  const lh = fs * 1.35;
+  ctx.textAlign    = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle    = corNome;
+  ctx.font         = `bold ${fs}px system-ui, sans-serif`;
+
+  linhas.forEach((linha, i) => {
+    const y = cy - ((linhas.length - 1) * lh) / 2 + i * lh;
+    ctx.fillText(linha, cx, y);
+  });
+
+  // Legenda abaixo
+  const legendaItens = segmentos.map(s => ({ label: s.label, color: s.color }));
+  const fsL = Math.round(size * 0.036);
+  ctx.font = `${fsL}px system-ui, sans-serif`;
+
+  const itemW = size / 2;
+  const legY0 = size - fsL * 2.4;
+
+  legendaItens.forEach(({ label, color }, i) => {
+    const col = i % 2;
+    const row = Math.floor(i / 2);
+    const x   = col === 0 ? size * 0.05 : size * 0.52;
+    const y   = legY0 + row * (fsL + 6);
+
+    ctx.fillStyle = color;
+    ctx.fillRect(x, y - fsL * 0.75, fsL, fsL);
+    ctx.fillStyle = '#555';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(label, x + fsL + 5, y - fsL * 0.25);
   });
 }
 

@@ -428,7 +428,8 @@ textarea { resize: vertical; }
 
 .chart-wrapper-donut {
   position: relative;
-  height: 260px;
+  width: 100%;
+  aspect-ratio: 1 / 1;
 }
 
 /* Dimensões mini-badges */
