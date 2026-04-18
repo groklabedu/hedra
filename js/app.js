@@ -1,4 +1,4 @@
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz5pZp_pYkp7A0pZF-AEr8_6kqdQ3wwgAqjbeclu_16s_A-Tr9ygwybHqO-U39OS1O2/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby1o60UP4evcSOQhAUD9tpw9TITQLv-QVAWUHAwMZ5SbmUr3JF31jSlDswNaapBkp20/exec';
 
 let userData = {};
 let respostas = new Array(40).fill(5);
