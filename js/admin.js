@@ -1,5 +1,5 @@
 // Configurar a mesma URL e chave do Apps Script
-const ADMIN_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxnnMhv-1cccHQfx8b-ODYOFM7BGo0J4pcVoi597-UxWtlUsWEv7AkkI_KN9Bxw2mE8/exec';
+const ADMIN_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz5pZp_pYkp7A0pZF-AEr8_6kqdQ3wwgAqjbeclu_16s_A-Tr9ygwybHqO-U39OS1O2/exec';
 const ADMIN_KEY = 'HEDRA@admin2026';
 
 let dadosAdmin = [];
