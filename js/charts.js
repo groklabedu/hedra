@@ -154,14 +154,12 @@ function renderarDimensoes(canvasId, scores) {
 }
 
 function renderarRosquinha(canvasId, scores, perfil) {
-  // Limpar instância Chart.js anterior se existir
   if (chartRosquinha) { chartRosquinha.destroy(); chartRosquinha = null; }
 
   const canvas = document.getElementById(canvasId);
   const dpr    = window.devicePixelRatio || 1;
-  const size   = canvas.clientWidth || 280;
+  const size   = canvas.clientWidth || 300;
 
-  // Canvas quadrado
   canvas.style.height = size + 'px';
   canvas.width  = size * dpr;
   canvas.height = size * dpr;
@@ -170,94 +168,117 @@ function renderarRosquinha(canvasId, scores, perfil) {
   ctx.scale(dpr, dpr);
   ctx.clearRect(0, 0, size, size);
 
-  const cx  = size / 2;
-  const cy  = size / 2;
-  const R   = size * 0.41;   // raio externo
-  const GAP = 0.07;           // espaço entre segmentos (radianos)
+  // ── Margens para labels dos eixos ─────────────────────────────────────────
+  const PAD   = size * 0.13;  // margem para labels de quadrante
+  const cx    = size / 2;
+  const cy    = size / 2;
+  const R     = (size - PAD * 2) * 0.47;  // raio externo da rosca
+  const MIN_T = 0.13;   // espessura mínima como fração de R (score 0%)
+  const MAX_T = 0.80;   // espessura máxima como fração de R (score 100%)
 
-  // MIN = espessura mínima (score 0%), MAX = espessura máxima (score 100%)
-  const MIN_T = 0.12;
-  const MAX_T = 0.74;
-
-  // Mapeamento: cada quadrante → dimensão correspondente
-  // Posições no círculo: topo-esq, topo-dir, baixo-dir, baixo-esq
+  // ── Quadrantes: dimensão, cor, ângulos, posição do label ─────────────────
+  // Ângulos: 0 = direita, sentido horário
+  // topo-esq  = 180°→270° (π → 3π/2)  → Influência   (ouro)
+  // topo-dir  = 270°→360° (3π/2 → 2π) → Maestria      (verde)
+  // baixo-dir = 0°→90°    (0 → π/2)   → Direção       (azul)
+  // baixo-esq = 90°→180°  (π/2 → π)   → Autodomínio   (vermelho)
+  const PI = Math.PI;
   const segmentos = [
-    { score: scores.influencia,  color: '#B7770D', label: 'Influência',  start: -Math.PI      }, // topo-esq
-    { score: scores.maestria,    color: '#1A6B45', label: 'Maestria',    start: -Math.PI / 2  }, // topo-dir
-    { score: scores.direcao,     color: '#1A5276', label: 'Direção',     start: 0             }, // baixo-dir
-    { score: scores.autodominio, color: '#CC4400', label: 'Autodomínio', start: Math.PI / 2   }, // baixo-esq
+    { score: scores.influencia,  color: '#B7770D', start: PI,       end: 3*PI/2, qLabel: 'Comunicador\nFrágil',              lx: PAD*0.4,      ly: PAD*0.55 },
+    { score: scores.maestria,    color: '#1A6B45', start: 3*PI/2,   end: 2*PI,   qLabel: 'Líder de\nInfluência\nEstratégica', lx: size-PAD*0.4, ly: PAD*0.55 },
+    { score: scores.direcao,     color: '#1A5276', start: 0,        end: PI/2,   qLabel: 'Executor\nEficiente',               lx: size-PAD*0.4, ly: size-PAD*0.55 },
+    { score: scores.autodominio, color: '#CC4400', start: PI/2,     end: PI,     qLabel: 'Operador\nSobrecarregado',          lx: PAD*0.4,      ly: size-PAD*0.55 },
   ];
 
-  segmentos.forEach(({ score, color, label, start }) => {
-    const end      = start + Math.PI / 2;
-    const espessura = (MIN_T + (MAX_T - MIN_T) * (score / 100)) * R;
-    const innerR   = Math.max(R - espessura, 2);
-    const midAngle = start + Math.PI / 4;
-    const midR     = (R + innerR) / 2;
+  // ── 1. Plano cartesiano ───────────────────────────────────────────────────
+  const axisColor = '#999';
+  const axisW     = 1.5;
+  const arrow     = size * 0.025;
 
-    // Arco com espessura variável
+  ctx.strokeStyle = axisColor;
+  ctx.lineWidth   = axisW;
+  ctx.setLineDash([]);
+
+  // Eixo Y (vertical) — de baixo para cima
+  ctx.beginPath();
+  ctx.moveTo(cx, size - PAD * 0.3);
+  ctx.lineTo(cx, PAD * 0.3);
+  ctx.stroke();
+  // Seta Y
+  ctx.beginPath();
+  ctx.moveTo(cx, PAD * 0.3);
+  ctx.lineTo(cx - arrow * 0.5, PAD * 0.3 + arrow);
+  ctx.moveTo(cx, PAD * 0.3);
+  ctx.lineTo(cx + arrow * 0.5, PAD * 0.3 + arrow);
+  ctx.stroke();
+
+  // Eixo X (horizontal)
+  ctx.beginPath();
+  ctx.moveTo(PAD * 0.3, cy);
+  ctx.lineTo(size - PAD * 0.3, cy);
+  ctx.stroke();
+  // Seta X
+  ctx.beginPath();
+  ctx.moveTo(size - PAD * 0.3, cy);
+  ctx.lineTo(size - PAD * 0.3 - arrow, cy - arrow * 0.5);
+  ctx.moveTo(size - PAD * 0.3, cy);
+  ctx.lineTo(size - PAD * 0.3 - arrow, cy + arrow * 0.5);
+  ctx.stroke();
+
+  // Labels dos eixos
+  const fsAxis = Math.round(size * 0.035);
+  ctx.fillStyle    = '#777';
+  ctx.font         = `600 ${fsAxis}px system-ui, sans-serif`;
+  ctx.textAlign    = 'center';
+  ctx.textBaseline = 'bottom';
+  ctx.fillText('↑ Impacto', cx, PAD * 0.28);
+
+  ctx.textAlign    = 'right';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('Direção →', size - PAD * 0.28, cy - fsAxis * 0.6);
+
+  // ── 2. Segmentos da rosca ─────────────────────────────────────────────────
+  segmentos.forEach(({ score, color, start, end }) => {
+    const espessura = (MIN_T + (MAX_T - MIN_T) * (score / 100)) * R;
+    const innerR    = Math.max(R - espessura, 1);
+    const midAngle  = (start + end) / 2;
+    const midR      = (R + innerR) / 2;
+
     ctx.beginPath();
-    ctx.arc(cx, cy, R,      start + GAP, end - GAP, false);
-    ctx.arc(cx, cy, innerR, end   - GAP, start + GAP, true);
+    ctx.arc(cx, cy, R,      start, end,   false);
+    ctx.arc(cx, cy, innerR, end,   start, true);
     ctx.closePath();
     ctx.fillStyle = color;
     ctx.fill();
 
-    // Score no meio do arco (só se houver espaço)
-    if (espessura > R * 0.22) {
-      ctx.save();
-      ctx.fillStyle = '#fff';
-      ctx.font = `bold ${Math.round(size * 0.038)}px system-ui, sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(Math.round(score) + '%',
-        cx + midR * Math.cos(midAngle),
-        cy + midR * Math.sin(midAngle));
-      ctx.restore();
-    }
-  });
-
-  // Nome do perfil no centro
-  const nome     = PERFIS[perfil].nome;
-  const corNome  = PERFIS[perfil].cor;
-  const palavras = nome.split(' ');
-  const linhas   = [];
-  for (let i = 0; i < palavras.length; i += 2) {
-    linhas.push(palavras.slice(i, i + 2).join(' '));
-  }
-
-  const fs = Math.round(size * 0.042);
-  const lh = fs * 1.35;
-  ctx.textAlign    = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillStyle    = corNome;
-  ctx.font         = `bold ${fs}px system-ui, sans-serif`;
-
-  linhas.forEach((linha, i) => {
-    const y = cy - ((linhas.length - 1) * lh) / 2 + i * lh;
-    ctx.fillText(linha, cx, y);
-  });
-
-  // Legenda abaixo
-  const legendaItens = segmentos.map(s => ({ label: s.label, color: s.color }));
-  const fsL = Math.round(size * 0.036);
-  ctx.font = `${fsL}px system-ui, sans-serif`;
-
-  const itemW = size / 2;
-  const legY0 = size - fsL * 2.4;
-
-  legendaItens.forEach(({ label, color }, i) => {
-    const col = i % 2;
-    const row = Math.floor(i / 2);
-    const x   = col === 0 ? size * 0.05 : size * 0.52;
-    const y   = legY0 + row * (fsL + 6);
-
-    ctx.fillStyle = color;
-    ctx.fillRect(x, y - fsL * 0.75, fsL, fsL);
-    ctx.fillStyle = '#555';
-    ctx.textAlign = 'left';
+    // Score dentro do arco
+    const fsScore = Math.round(size * 0.04);
+    ctx.save();
+    ctx.fillStyle    = '#fff';
+    ctx.font         = `bold ${fsScore}px system-ui, sans-serif`;
+    ctx.textAlign    = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(label, x + fsL + 5, y - fsL * 0.25);
+    ctx.fillText(
+      Math.round(score) + '%',
+      cx + midR * Math.cos(midAngle),
+      cy + midR * Math.sin(midAngle)
+    );
+    ctx.restore();
+  });
+
+  // ── 3. Labels dos quadrantes (cantos) ─────────────────────────────────────
+  const fsQ    = Math.round(size * 0.034);
+  const lhQ    = fsQ * 1.3;
+  const aligns = ['left', 'right', 'right', 'left'];
+  const vAligns= ['top', 'top', 'bottom', 'bottom'];
+
+  segmentos.forEach(({ color, qLabel, lx, ly }, i) => {
+    const linhas = qLabel.split('\n');
+    ctx.fillStyle    = color;
+    ctx.font         = `bold ${fsQ}px system-ui, sans-serif`;
+    ctx.textAlign    = aligns[i];
+    ctx.textBaseline = vAligns[i];
+    linhas.forEach((l, j) => ctx.fillText(l, lx, ly + j * lhQ));
   });
 }
 
