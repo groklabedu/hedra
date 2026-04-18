@@ -41,7 +41,11 @@ header {
   z-index: 100;
 }
 
-header img { height: 40px; object-fit: contain; }
+header img {
+  height: 40px;
+  object-fit: contain;
+  filter: brightness(0) invert(1);
+}
 
 header .header-placeholder {
   color: #fff;
