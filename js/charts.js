@@ -233,9 +233,9 @@ function renderarRosquinha(canvasId, scores, perfil) {
   ctx.textBaseline = 'bottom';
   ctx.fillText('↑ Impacto', cx, PAD * 0.28);
 
-  ctx.textAlign    = 'right';
-  ctx.textBaseline = 'middle';
-  ctx.fillText('Direção →', size - PAD * 0.28, cy - fsAxis * 0.6);
+  ctx.textAlign    = 'center';
+  ctx.textBaseline = 'bottom';
+  ctx.fillText('Direção →', cx, size - PAD * 0.1);
 
   // ── 2. Segmentos da rosca ─────────────────────────────────────────────────
   segmentos.forEach(({ score, color, start, end }) => {
