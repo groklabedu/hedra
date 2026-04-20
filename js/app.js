@@ -1,7 +1,10 @@
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbylXejuMSFfudVko4KNyECI18LgDCcu7WN4tWgmnE8zUiAqhwCHjUinJkEwyJMnbuT4/exec';
 
+const TOTAL_PERGUNTAS = 48; // 12 por bloco × 4 blocos
+const PERGUNTAS_POR_BLOCO = 12;
+
 let userData = {};
-let respostas = new Array(40).fill(5);
+let respostas = new Array(TOTAL_PERGUNTAS).fill(5);
 let respostaAberta = '';
 let secaoAtual = 1;
 let scoreData = null;
@@ -15,9 +18,9 @@ function mostrarTela(id) {
 }
 
 function atualizarProgressBar(respondidas) {
-  const pct = Math.round((respondidas / 40) * 100);
+  const pct = Math.round((respondidas / TOTAL_PERGUNTAS) * 100);
   document.getElementById('progresso-barra').style.width = pct + '%';
-  document.getElementById('progresso-texto').textContent = `${respondidas} / 40`;
+  document.getElementById('progresso-texto').textContent = `${respondidas} / ${TOTAL_PERGUNTAS}`;
 }
 
 // ─── Tela 1: Identificação ──────────────────────────────────────────────────
@@ -25,7 +28,6 @@ function atualizarProgressBar(respondidas) {
 document.getElementById('form-identificacao').addEventListener('submit', async (e) => {
   e.preventDefault();
 
-  // Validar campos obrigatórios
   const campos = ['campo-nome', 'campo-email', 'campo-cargo', 'campo-area', 'campo-unidade'];
   let valido = true;
   campos.forEach((id) => {
@@ -46,11 +48,9 @@ document.getElementById('form-identificacao').addEventListener('submit', async (
 
   const email = document.getElementById('campo-email').value.trim().toLowerCase();
 
-  // Esconder mensagens anteriores
   document.getElementById('msg-duplicado').classList.add('oculto');
   document.getElementById('opcoes-duplicado').classList.add('oculto');
 
-  // Verificar localStorage e servidor
   const jaFez = JSON.parse(localStorage.getItem('hedra_participantes') || '[]');
   const btnSubmit = e.target.querySelector('button[type="submit"]');
   btnSubmit.textContent = 'Verificando…';
@@ -63,13 +63,11 @@ document.getElementById('form-identificacao').addEventListener('submit', async (
       mostrarOpcoesDuplicado(email, json.data);
       return;
     }
-    // Não está no servidor; se estava no localStorage, limpar entrada obsoleta
     if (jaFez.includes(email)) {
       const atualizado = jaFez.filter((e) => e !== email);
       localStorage.setItem('hedra_participantes', JSON.stringify(atualizado));
     }
   } catch (_) {
-    // Falha na conexão: usar localStorage como fallback
     if (jaFez.includes(email)) {
       mostrarOpcoesDuplicado(email, null);
       return;
@@ -82,7 +80,6 @@ document.getElementById('form-identificacao').addEventListener('submit', async (
   iniciarTeste(email, false);
 });
 
-// Limpar erros ao digitar
 ['campo-nome', 'campo-email', 'campo-cargo', 'campo-area', 'campo-unidade'].forEach((id) => {
   document.getElementById(id).addEventListener('input', () => {
     document.getElementById(id).classList.remove('campo-erro');
@@ -132,7 +129,7 @@ function iniciarTeste(email, override) {
   };
 
   secaoAtual = 1;
-  respostas = new Array(40).fill(5);
+  respostas = new Array(TOTAL_PERGUNTAS).fill(5);
   renderizarSecao(1);
   mostrarTela('tela-teste');
 }
@@ -140,9 +137,9 @@ function iniciarTeste(email, override) {
 // ─── Tela 2: Teste ──────────────────────────────────────────────────────────
 
 function renderizarSecao(secao) {
-  const parte = PARTES[secao - 1];
+  const parte    = PARTES[secao - 1];
   const perguntas = PERGUNTAS.filter((p) => p.parte === secao);
-  const offset = (secao - 1) * 10;
+  const offset   = (secao - 1) * PERGUNTAS_POR_BLOCO;
 
   document.getElementById('secao-titulo').textContent = `Parte ${secao} de 4 — ${parte.titulo}`;
   document.getElementById('secao-descricao').textContent = parte.descricao;
@@ -151,7 +148,7 @@ function renderizarSecao(secao) {
   container.innerHTML = '';
 
   perguntas.forEach((p, idx) => {
-    const i = offset + idx;
+    const i   = offset + idx;
     const val = respostas[i];
     const item = document.createElement('div');
     item.className = 'pergunta-item';
@@ -199,7 +196,6 @@ function atualizarBotaoVoltar() {
   btn.style.display = secaoAtual > 1 ? '' : 'none';
 }
 
-// Avançar
 document.getElementById('btn-avancar').addEventListener('click', () => {
   if (secaoAtual < 4) {
     secaoAtual++;
@@ -213,7 +209,6 @@ document.getElementById('btn-avancar').addEventListener('click', () => {
   atualizarBotaoVoltar();
 });
 
-// Voltar
 document.getElementById('btn-voltar').addEventListener('click', () => {
   if (secaoAtual === 5) {
     secaoAtual = 4;
@@ -228,7 +223,7 @@ document.getElementById('btn-voltar').addEventListener('click', () => {
 // ─── Pergunta aberta ────────────────────────────────────────────────────────
 
 function mostrarPerguntaAberta() {
-  atualizarProgressBar(40);
+  atualizarProgressBar(TOTAL_PERGUNTAS);
   document.getElementById('secao-titulo').textContent = 'Reflexão final';
   document.getElementById('secao-descricao').textContent = '';
 
@@ -245,16 +240,20 @@ function mostrarPerguntaAberta() {
         <div class="qp-eixo-y">↑ Impacto</div>
         <div class="qp-grid">
           <div class="qp-cell" style="border-color:#B7770D40;color:#B7770D">
-            Comunicador<br>Frágil
+            <strong>Comunicador Frágil</strong><br>
+            <span style="font-weight:400;font-size:0.75rem">"Tenho boa relação com o time, mas nem sempre consigo direcionar com firmeza."</span>
           </div>
           <div class="qp-cell" style="border-color:#1A6B4540;color:#1A6B45">
-            Líder de<br>Influência Estratégica
+            <strong>Líder de Influência Estratégica</strong><br>
+            <span style="font-weight:400;font-size:0.75rem">"Eu defino direção, mobilizo pessoas e desenvolvo autonomia no time."</span>
           </div>
           <div class="qp-cell" style="border-color:#CC440040;color:#CC4400">
-            Operador<br>Sobrecarregado
+            <strong>Operador Sobrecarregado</strong><br>
+            <span style="font-weight:400;font-size:0.75rem">"Faço tudo, resolvo tudo... e ainda sinto que nada sai do lugar."</span>
           </div>
           <div class="qp-cell" style="border-color:#1A527640;color:#1A5276">
-            Executor<br>Eficiente
+            <strong>Executor Eficiente</strong><br>
+            <span style="font-weight:400;font-size:0.75rem">"Eu garanto a entrega, mas ainda carrego o time nas costas."</span>
           </div>
         </div>
         <div class="qp-eixo-x">Direção →</div>
@@ -322,10 +321,12 @@ function renderizarResultado(scores) {
 
   document.getElementById('perfil-descricao').textContent = perfil.descricao;
 
-  document.getElementById('pct-autodominio').textContent = scores.autodominio + '%';
-  document.getElementById('pct-direcao').textContent     = scores.direcao + '%';
-  document.getElementById('pct-influencia').textContent  = scores.influencia + '%';
-  document.getElementById('pct-maestria').textContent    = scores.maestria + '%';
+  // Exibir como percentual (escala 0–140 → 0–100%)
+  const pct = (v) => Math.round((v / MAX_SCORE) * 100) + '%';
+  document.getElementById('pct-autodominio').textContent = pct(scores.autodominio);
+  document.getElementById('pct-direcao').textContent     = pct(scores.direcao);
+  document.getElementById('pct-influencia').textContent  = pct(scores.influencia);
+  document.getElementById('pct-maestria').textContent    = pct(scores.maestria);
 
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {

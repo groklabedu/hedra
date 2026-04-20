@@ -5,8 +5,8 @@ const quadrantPlugin = {
   id: 'quadrantPlugin',
   beforeDraw(chart) {
     const { ctx, chartArea: { left, top, right, bottom }, scales: { x, y } } = chart;
-    const midX = x.getPixelForValue(50);
-    const midY = y.getPixelForValue(50);
+    const midX = x.getPixelForValue(70);
+    const midY = y.getPixelForValue(70);
 
     ctx.save();
 
@@ -34,8 +34,8 @@ const quadrantPlugin = {
 
   afterDraw(chart) {
     const { ctx, chartArea: { left, top, right, bottom }, scales: { x, y } } = chart;
-    const midX = x.getPixelForValue(50);
-    const midY = y.getPixelForValue(50);
+    const midX = x.getPixelForValue(70);
+    const midY = y.getPixelForValue(70);
     const pad = 6;
 
     ctx.save();
@@ -89,13 +89,13 @@ function renderarMapaHEDRA(canvasId, eixoX, eixoY, perfil) {
       },
       scales: {
         x: {
-          min: 0, max: 100,
+          min: 0, max: 140,
           title: { display: true, text: 'Direção →', font: { size: 11 } },
           grid: { color: 'rgba(0,0,0,0.05)' },
           ticks: { maxTicksLimit: 6 },
         },
         y: {
-          min: 0, max: 100,
+          min: 0, max: 140,
           title: { display: true, text: 'Impacto →', font: { size: 11 } },
           grid: { color: 'rgba(0,0,0,0.05)' },
           ticks: { maxTicksLimit: 6 },
@@ -109,7 +109,8 @@ function renderarDimensoes(canvasId, scores) {
   const ctx = document.getElementById(canvasId).getContext('2d');
   if (chartDimensoes) { chartDimensoes.destroy(); chartDimensoes = null; }
 
-  const pct = (v) => Math.round((v / 100) * 100);
+  // Converter escala 0–140 para percentual 0–100%
+  const pct = (v) => Math.round((v / 140) * 100);
 
   chartDimensoes = new Chart(ctx, {
     type: 'bar',

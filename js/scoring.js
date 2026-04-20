@@ -1,4 +1,12 @@
-const INVERTIDAS = [8, 9, 18, 19, 20, 28, 29, 30, 38, 39, 40];
+// ── Perguntas armadilha (invertidas + peso 2) ────────────────────────────────
+// São as perguntas 11 e 12 de cada bloco (IDs 1-based)
+const TRAP_IDS = new Set([11, 12, 23, 24, 35, 36, 47, 48]);
+
+// Escala por dimensão: 0–140
+//   10 perguntas normais  × 10 = 100
+//   2 perguntas armadilha × (10 × 2) = 40
+const MAX_SCORE = 140;
+const THRESHOLD = 70; // ponto de corte baixo/alto (50% de 140)
 
 const PERFIS = {
   operador: {
@@ -24,23 +32,27 @@ const PERFIS = {
 };
 
 function calcularScore(respostas) {
-  const r = respostas.map((val, i) =>
-    INVERTIDAS.includes(i + 1) ? 10 - val : val
-  );
+  let autodominio = 0, direcao = 0, influencia = 0, maestria = 0;
 
-  const autodominio = r.slice(0, 10).reduce((a, b) => a + b, 0);
-  const direcao     = r.slice(10, 20).reduce((a, b) => a + b, 0);
-  const influencia  = r.slice(20, 30).reduce((a, b) => a + b, 0);
-  const maestria    = r.slice(30, 40).reduce((a, b) => a + b, 0);
+  respostas.forEach((val, i) => {
+    const id     = i + 1; // 1-based
+    const isTrap = TRAP_IDS.has(id);
+    const pontos = isTrap ? (10 - val) * 2 : val;
 
-  const eixoX = direcao;
-  const eixoY = (influencia + maestria) / 2;
+    if      (id <= 12) autodominio += pontos;
+    else if (id <= 24) direcao     += pontos;
+    else if (id <= 36) influencia  += pontos;
+    else               maestria    += pontos;
+  });
+
+  const eixoX = direcao;                        // 0–140
+  const eixoY = (influencia + maestria) / 2;    // 0–140
 
   let perfil;
-  if      (eixoX < 50 && eixoY < 50) perfil = 'operador';
-  else if (eixoX >= 50 && eixoY < 50) perfil = 'executor';
-  else if (eixoX < 50 && eixoY >= 50) perfil = 'comunicador';
-  else                                  perfil = 'lider';
+  if      (eixoX <  THRESHOLD && eixoY <  THRESHOLD) perfil = 'operador';
+  else if (eixoX >= THRESHOLD && eixoY <  THRESHOLD) perfil = 'executor';
+  else if (eixoX <  THRESHOLD && eixoY >= THRESHOLD) perfil = 'comunicador';
+  else                                                perfil = 'lider';
 
   return { autodominio, direcao, influencia, maestria, eixoX, eixoY, perfil };
 }

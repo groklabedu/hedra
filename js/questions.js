@@ -1,56 +1,65 @@
-const PERGUNTAS = [
-  // Parte 1: Autodomínio (Q1–Q10)
-  { id: 1,  texto: "Eu consigo manter a calma em situações de pressão.", parte: 1, invertida: false },
-  { id: 2,  texto: "Tenho consciência do impacto do meu estado emocional no time.", parte: 1, invertida: false },
-  { id: 3,  texto: "Antes de responder em situações tensas, eu faço uma pausa consciente.", parte: 1, invertida: false },
-  { id: 4,  texto: "Ao longo da semana, percebo quando estou reagindo no automático.", parte: 1, invertida: false },
-  { id: 5,  texto: "Consigo identificar meus principais gatilhos no trabalho.", parte: 1, invertida: false },
-  { id: 6,  texto: "Minhas reações costumam trazer clareza e segurança para a equipe.", parte: 1, invertida: false },
-  { id: 7,  texto: "As pessoas percebem em mim equilíbrio emocional.", parte: 1, invertida: false },
-  { id: 8,  texto: "Em dias de pressão, ajo por impulso.", parte: 1, invertida: true },
-  { id: 9,  texto: "Levo o estresse do trabalho para as relações com o time.", parte: 1, invertida: true },
-  { id: 10, texto: "Ao final da semana, reflito sobre como liderei a mim mesmo.", parte: 1, invertida: false },
-
-  // Parte 2: Direção (Q11–Q20)
-  { id: 11, texto: "Tenho clareza sobre as prioridades da minha equipe.", parte: 2, invertida: false },
-  { id: 12, texto: "Consigo tomar decisões com segurança.", parte: 2, invertida: false },
-  { id: 13, texto: "Diferencio urgência de prioridade estratégica.", parte: 2, invertida: false },
-  { id: 14, texto: "Direciono claramente responsáveis e prazos.", parte: 2, invertida: false },
-  { id: 15, texto: "Sustento decisões mesmo quando sou questionado.", parte: 2, invertida: false },
-  { id: 16, texto: "Meu time sabe exatamente o que precisa entregar.", parte: 2, invertida: false },
-  { id: 17, texto: "Minhas reuniões terminam com próximos passos claros.", parte: 2, invertida: false },
-  { id: 18, texto: "Mudo de direção com frequência diante de pressão.", parte: 2, invertida: true },
-  { id: 19, texto: "Adio decisões importantes por desconforto.", parte: 2, invertida: true },
-  { id: 20, texto: "Ajo mais reagindo à agenda do que conduzindo a rota.", parte: 2, invertida: true },
-
-  // Parte 3: Influência (Q21–Q30)
-  { id: 21, texto: "Eu me posiciono com clareza em reuniões.", parte: 3, invertida: false },
-  { id: 22, texto: "Tenho facilidade para conduzir conversas difíceis.", parte: 3, invertida: false },
-  { id: 23, texto: "Dou feedbacks diretos quando necessário.", parte: 3, invertida: false },
-  { id: 24, texto: "Expresso discordância de forma produtiva.", parte: 3, invertida: false },
-  { id: 25, texto: "Consigo influenciar decisões além de executar.", parte: 3, invertida: false },
-  { id: 26, texto: "Minha opinião costuma ser considerada pelo time e pela liderança.", parte: 3, invertida: false },
-  { id: 27, texto: "As pessoas se engajam nas mudanças que proponho.", parte: 3, invertida: false },
-  { id: 28, texto: "Evito conversas difíceis para não gerar desconforto.", parte: 3, invertida: true },
-  { id: 29, texto: "Deixo de me posicionar para evitar conflito.", parte: 3, invertida: true },
-  { id: 30, texto: "Sinto que entrego muito, mas sou pouco ouvido.", parte: 3, invertida: true },
-
-  // Parte 4: Maestria (Q31–Q40)
-  { id: 31, texto: "Minha liderança desenvolve pessoas.", parte: 4, invertida: false },
-  { id: 32, texto: "Contribuo para a evolução da cultura do time.", parte: 4, invertida: false },
-  { id: 33, texto: "Delego de forma a desenvolver autonomia.", parte: 4, invertida: false },
-  { id: 34, texto: "Formo pessoas para assumir responsabilidades maiores.", parte: 4, invertida: false },
-  { id: 35, texto: "Estimulo o time a tomar decisões sem depender de mim.", parte: 4, invertida: false },
-  { id: 36, texto: "Meu time resolve problemas sem minha intervenção constante.", parte: 4, invertida: false },
-  { id: 37, texto: "Minha liderança melhora o ambiente e a confiança.", parte: 4, invertida: false },
-  { id: 38, texto: "Centralizo decisões importantes.", parte: 4, invertida: true },
-  { id: 39, texto: "O time ainda depende muito de mim.", parte: 4, invertida: true },
-  { id: 40, texto: "Sinto que ainda não deixo o impacto que gostaria como líder.", parte: 4, invertida: true },
+const PARTES = [
+  { numero: 1, titulo: 'Autodomínio',  descricao: 'Como você lida com suas emoções e reações em situações de pressão.' },
+  { numero: 2, titulo: 'Direção',      descricao: 'Como você define prioridades, toma decisões e guia o time com clareza.' },
+  { numero: 3, titulo: 'Influência',   descricao: 'Como você se posiciona, se comunica e impacta as pessoas ao seu redor.' },
+  { numero: 4, titulo: 'Maestria',     descricao: 'Como você desenvolve pessoas, delega e gera autonomia no time.' },
 ];
 
-const PARTES = [
-  { numero: 1, titulo: "Autodomínio",  descricao: "Como você lida com suas emoções e reações" },
-  { numero: 2, titulo: "Direção",      descricao: "Como você define prioridades e toma decisões" },
-  { numero: 3, titulo: "Influência",   descricao: "Como você se posiciona e engaja pessoas" },
-  { numero: 4, titulo: "Maestria",     descricao: "Como você desenvolve o time e multiplica impacto" },
+// trap: true → pergunta invertida com peso 2 no cálculo
+const PERGUNTAS = [
+  // ── Bloco 1: Autodomínio ─────────────────────────────────────────────────
+  { id:  1, parte: 1, texto: 'Eu consigo manter a calma em situações de pressão.' },
+  { id:  2, parte: 1, texto: 'Tenho consciência do impacto do meu estado emocional no time.' },
+  { id:  3, parte: 1, texto: 'Consigo perceber quando estou reagindo no automático.' },
+  { id:  4, parte: 1, texto: 'Me considero um líder equilibrado emocionalmente.' },
+  { id:  5, parte: 1, texto: 'Faço pausas conscientes antes de responder em situações tensas.' },
+  { id:  6, parte: 1, texto: 'Consigo identificar meus principais gatilhos emocionais no trabalho.' },
+  { id:  7, parte: 1, texto: 'Em reuniões difíceis, consigo sustentar presença.' },
+  { id:  8, parte: 1, texto: 'Reviso mentalmente situações do dia para entender meu comportamento.' },
+  { id:  9, parte: 1, texto: 'Minhas reações geram segurança no time.' },
+  { id: 10, parte: 1, texto: 'As pessoas confiam na minha estabilidade emocional.' },
+  { id: 11, parte: 1, texto: 'Já reagi no impulso e me arrependi depois.', trap: true },
+  { id: 12, parte: 1, texto: 'Em momentos de pressão, ajo de forma diferente do líder que eu gostaria de ser.', trap: true },
+
+  // ── Bloco 2: Direção ─────────────────────────────────────────────────────
+  { id: 13, parte: 2, texto: 'Tenho clareza sobre as prioridades da minha equipe.' },
+  { id: 14, parte: 2, texto: 'Me considero um líder com boa capacidade de decisão.' },
+  { id: 15, parte: 2, texto: 'Consigo direcionar o time com clareza.' },
+  { id: 16, parte: 2, texto: 'Tenho visão clara do que é importante, e consigo alinhar com o time.' },
+  { id: 17, parte: 2, texto: 'Defino prioridades claras semanalmente, de forma organizada e estruturada.' },
+  { id: 18, parte: 2, texto: 'Sustento decisões mesmo quando sou questionado, sem recuar.' },
+  { id: 19, parte: 2, texto: 'Diferencio urgência de prioridade estratégica.' },
+  { id: 20, parte: 2, texto: 'Finalizo reuniões com próximos passos definidos e clareza nos encaminhamentos.' },
+  { id: 21, parte: 2, texto: 'Meu time sabe exatamente o que precisa entregar.' },
+  { id: 22, parte: 2, texto: 'As decisões avançam com clareza na minha liderança.' },
+  { id: 23, parte: 2, texto: 'Minha agenda é dominada por urgências e problemas.', trap: true },
+  { id: 24, parte: 2, texto: 'Adio decisões importantes mais do que gostaria.', trap: true },
+
+  // ── Bloco 3: Influência ──────────────────────────────────────────────────
+  { id: 25, parte: 3, texto: 'Me posiciono com clareza em reuniões.' },
+  { id: 26, parte: 3, texto: 'Tenho facilidade em lidar com conversas difíceis.' },
+  { id: 27, parte: 3, texto: 'Sou ouvido com atenção quando falo.' },
+  { id: 28, parte: 3, texto: 'Consigo influenciar decisões.' },
+  { id: 29, parte: 3, texto: 'Dou feedbacks diretos, quando necessário, mesmo quando a conversa é difícil.' },
+  { id: 30, parte: 3, texto: 'Expresso discordância de forma clara mesmo com superiores ou pares.' },
+  { id: 31, parte: 3, texto: 'Trago minha opinião mesmo quando é desconfortável e não foi solicitada.' },
+  { id: 32, parte: 3, texto: 'Conduzo conversas difíceis sem evitar e o mais rápido possível.' },
+  { id: 33, parte: 3, texto: 'Minha opinião gera movimento nas decisões.' },
+  { id: 34, parte: 3, texto: 'O time se engaja nas direções que proponho.' },
+  { id: 35, parte: 3, texto: 'Na última semana, evitei alguma conversa tensa.', trap: true },
+  { id: 36, parte: 3, texto: 'Já saí de uma reunião pensando "eu deveria ter falado e não falei".', trap: true },
+
+  // ── Bloco 4: Maestria ────────────────────────────────────────────────────
+  { id: 37, parte: 4, texto: 'Desenvolvo pessoas no meu time.' },
+  { id: 38, parte: 4, texto: 'Minha liderança gera impacto positivo.' },
+  { id: 39, parte: 4, texto: 'Consigo formar novos líderes.' },
+  { id: 40, parte: 4, texto: 'Tenho um papel relevante na evolução do time.' },
+  { id: 41, parte: 4, texto: 'Delego de forma a desenvolver autonomia.' },
+  { id: 42, parte: 4, texto: 'Estimulo o time a tomar decisões.' },
+  { id: 43, parte: 4, texto: 'Desenvolvo pessoas intencionalmente.' },
+  { id: 44, parte: 4, texto: 'Cobro resultados sem gerar dependência.' },
+  { id: 45, parte: 4, texto: 'Meu time tem maturidade e resolve problemas sem depender de mim.' },
+  { id: 46, parte: 4, texto: 'O ambiente melhora com minha presença e liderança.' },
+  { id: 47, parte: 4, texto: 'Se eu me ausento, o time parece que perde ritmo.', trap: true },
+  { id: 48, parte: 4, texto: 'Ainda sou o principal ponto de decisão da equipe.', trap: true },
 ];
