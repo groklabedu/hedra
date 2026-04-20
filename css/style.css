@@ -455,6 +455,15 @@ textarea { resize: vertical; }
   color: var(--cor-principal);
 }
 
+.dimensao-badge .d-frase {
+  font-size: 0.72rem;
+  color: #888;
+  font-style: italic;
+  line-height: 1.4;
+  display: block;
+  margin-top: 6px;
+}
+
 .fechamento-box {
   background: linear-gradient(135deg, #8B1A1A08, #C8961A08);
   border: 1px solid var(--cor-dourada);
