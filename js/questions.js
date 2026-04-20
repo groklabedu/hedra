@@ -1,8 +1,8 @@
 const PARTES = [
-  { numero: 1, titulo: 'Autodomínio',  descricao: 'Como você lida com suas emoções e reações em situações de pressão.' },
-  { numero: 2, titulo: 'Direção',      descricao: 'Como você define prioridades, toma decisões e guia o time com clareza.' },
-  { numero: 3, titulo: 'Influência',   descricao: 'Como você se posiciona, se comunica e impacta as pessoas ao seu redor.' },
-  { numero: 4, titulo: 'Maestria',     descricao: 'Como você desenvolve pessoas, delega e gera autonomia no time.' },
+  { numero: 1, titulo: 'Autodomínio',  descricao: '' },
+  { numero: 2, titulo: 'Direção',      descricao: '' },
+  { numero: 3, titulo: 'Influência',   descricao: '' },
+  { numero: 4, titulo: 'Maestria',     descricao: '' },
 ];
 
 // trap: true → pergunta invertida com peso 2 no cálculo
