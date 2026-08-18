@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="description" content="Inventário HEDRA 2.0 — Matriz de Maturidade da Liderança">
+  <title>Inventário HEDRA 2.0</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    .badge-v2 {
+      display: inline-block;
+      background: #1A6B45;
+      color: #fff;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      padding: 2px 8px;
+      border-radius: 20px;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <img src="../assets/logo-horizontal.png" alt="Asséssor Consultoria" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'header-placeholder',textContent:'Asséssor Consultoria e Treinamento'}))">
+  </header>
+
+  <!-- ════════════════════════════════════════════════════════ TELA 1 ════ -->
+  <div id="tela-identificacao" class="tela ativa">
+    <div class="container">
+
+      <div class="intro-box">
+        <span class="intro-badge">Inventário de Liderança <span class="badge-v2">v2 — Em Teste</span></span>
+        <p class="hedra-subtitulo">Matriz de Maturidade da Liderança</p>
+      </div>
+
+      <div class="card intro-texto">
+        <p>Este inventário busca compreender <strong>como sua liderança acontece na prática hoje</strong>.</p>
+        <p>Responda considerando exclusivamente situações vividas <strong>nas últimas 4 semanas</strong>.</p>
+        <p>Não responda pensando no que você sabe sobre liderança, no que considera correto ou no líder que gostaria de ser. Pense no que <strong>efetivamente aconteceu na sua rotina</strong>.</p>
+        <p>Se ficar em dúvida entre duas notas, escolha aquela que melhor representa o que acontece <strong>na prática e com maior frequência</strong>.</p>
+      </div>
+
+      <div class="card">
+        <h2>Suas informações</h2>
+        <p class="subtitulo">Preencha os campos abaixo para iniciar o inventário.</p>
+
+        <form id="form-identificacao" novalidate>
+          <div class="campo-grupo">
+            <label for="campo-nome">Nome completo *</label>
+            <input type="text" id="campo-nome" placeholder="Seu nome completo" required autocomplete="name">
+          </div>
+
+          <div class="campo-grupo">
+            <label for="campo-email">E-mail *</label>
+            <input type="email" id="campo-email" placeholder="seu@email.com" required autocomplete="email">
+          </div>
+
+          <div class="campo-grupo">
+            <label for="campo-cargo">Cargo *</label>
+            <input type="text" id="campo-cargo" placeholder="Ex: Gerente de Projetos" required>
+          </div>
+
+          <div class="campo-grupo">
+            <label for="campo-area">Área *</label>
+            <input type="text" id="campo-area" placeholder="Ex: Operações, Comercial…" required>
+          </div>
+
+          <div class="campo-grupo">
+            <label for="campo-unidade">Unidade de negócio *</label>
+            <input type="text" id="campo-unidade" placeholder="Ex: Filial SP, Unidade Norte…" required>
+          </div>
+
+          <div id="msg-campos-obrigatorios" class="alerta alerta-erro oculto">
+            Preencha todos os campos obrigatórios antes de continuar.
+          </div>
+
+          <div id="msg-duplicado" class="alerta alerta-erro oculto">
+            Este e-mail já realizou o inventário.
+          </div>
+
+          <div id="opcoes-duplicado" class="oculto" style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
+            <button type="button" class="btn btn-secundario" id="btn-ver-resultado">
+              Ver meu resultado anterior
+            </button>
+            <button type="button" class="btn btn-primario" id="btn-refazer">
+              Refazer o teste (substitui o resultado anterior)
+            </button>
+          </div>
+
+          <button type="submit" class="btn btn-primario" id="btn-iniciar" style="margin-top:8px">
+            Iniciar inventário →
+          </button>
+        </form>
+      </div>
+
+    </div>
+  </div>
+  <!-- ════════════════════════════════════════════════════════ TELA 2 ════ -->
+  <div id="tela-teste" class="tela">
+    <div class="container">
+
+      <div class="steps-wrapper" style="margin-top:16px">
+        <div class="step-indicator ativo" id="step-1">1</div>
+        <div class="step-indicator"       id="step-2">2</div>
+        <div class="step-indicator"       id="step-3">3</div>
+        <div class="step-indicator"       id="step-4">4</div>
+      </div>
+
+      <div class="progresso-wrapper">
+        <div class="progresso-header">
+          <span>Progresso geral</span>
+          <span id="progresso-texto">0 / 48</span>
+        </div>
+        <div class="progresso-track">
+          <div class="progresso-fill" id="progresso-barra"></div>
+        </div>
+      </div>
+
+      <div class="instrucao-box">
+        Responda considerando <strong>como você realmente lidera hoje</strong>.<br>
+        Use a escala de 0 a 10:<br>
+        <strong>0 = nunca acontece</strong><br>
+        <strong>5 = às vezes</strong><br>
+        <strong>10 = acontece sempre</strong>
+      </div>
+
+      <div class="secao-header">
+        <h2 id="secao-titulo">Parte 1 de 4 — Na Rotina Real</h2>
+        <p id="secao-descricao"></p>
+      </div>
+
+      <div id="perguntas-container"></div>
+
+      <div class="nav-botoes">
+        <button class="btn btn-secundario" id="btn-voltar" style="display:none">
+          ← Voltar
+        </button>
+        <button class="btn btn-primario" id="btn-avancar">
+          Próxima parte →
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════ TELA 3 ════ -->
+  <div id="tela-resultado" class="tela">
+
+    <div id="resultado-exportavel">
+
+      <div class="resultado-header-exportavel">
+        <p style="font-size:0.75rem;color:#888;margin-top:4px">Inventário HEDRA — Matriz de Maturidade da Liderança</p>
+      </div>
+
+      <div style="padding:0 16px">
+
+        <div class="card secao-resultado" style="margin-top:0">
+          <h3>Seu perfil de liderança</h3>
+          <p class="perfil-nome" id="perfil-nome"></p>
+          <p class="perfil-descricao" id="perfil-descricao"></p>
+        </div>
+
+        <div class="card secao-resultado">
+          <h3>Mapa HEDRA</h3>
+          <div class="chart-wrapper">
+            <canvas id="canvas-mapa"></canvas>
+          </div>
+        </div>
+
+        <div class="card secao-resultado">
+          <h3>Composição das dimensões</h3>
+
+          <div class="dimensoes-grid">
+            <div class="dimensao-badge">
+              <span class="d-label">Autodomínio</span>
+              <span class="d-valor" id="pct-autodominio">—</span>
+              <span class="d-frase">"Eu consigo perceber quando estou no automático e escolher como responder."</span>
+            </div>
+            <div class="dimensao-badge">
+              <span class="d-label">Direção</span>
+              <span class="d-valor" id="pct-direcao">—</span>
+              <span class="d-frase">"Eu não apenas executo — eu defino o caminho e sustento decisões."</span>
+            </div>
+            <div class="dimensao-badge">
+              <span class="d-label">Influência</span>
+              <span class="d-valor" id="pct-influencia">—</span>
+              <span class="d-frase">"Eu me posiciono, conduzo conversas e mobilizo pessoas."</span>
+            </div>
+            <div class="dimensao-badge">
+              <span class="d-label">Maestria</span>
+              <span class="d-valor" id="pct-maestria">—</span>
+              <span class="d-frase">"Eu gero resultado através das pessoas — não apenas através de mim."</span>
+            </div>
+          </div>
+
+          <div class="chart-wrapper-bar">
+            <canvas id="canvas-dimensoes"></canvas>
+          </div>
+        </div>
+
+        <div class="card secao-resultado">
+          <div class="fechamento-box">
+            Lembre-se: A liderança não é fixa, é evolutiva! Seu resultado não define quem você é como líder — ele revela como você está liderando hoje. E liderança é construída diariamente, nas escolhas que você faz a partir dessa consciência.
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="botoes-exportar">
+      <button class="btn btn-secundario" id="btn-exportar-png">
+        Salvar como imagem (PNG)
+      </button>
+      <button class="btn btn-dourado" id="btn-exportar-pdf">
+        Salvar como PDF
+      </button>
+    </div>
+
+  </div>
+
+  <!-- CDNs -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <!-- App v2 -->
+  <script src="js/questions.js"></script>
+  <script src="js/scoring.js"></script>
+  <script src="js/charts.js"></script>
+  <script src="js/export.js"></script>
+  <script src="js/app.js"></script>
+
+</body>
+</html>
