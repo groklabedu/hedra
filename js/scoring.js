@@ -6,7 +6,7 @@ const TRAP_IDS = new Set([11, 12, 23, 24, 35, 36, 47, 48]);
 //   10 perguntas normais  × 10 = 100
 //   2 perguntas armadilha × (10 × 2) = 40
 const MAX_SCORE = 140;
-const THRESHOLD = 70; // ponto de corte baixo/alto (50% de 140)
+const THRESHOLD = 90; // ponto de corte baixo/alto (~64% de 140)
 
 const PERFIS = {
   operador: {
