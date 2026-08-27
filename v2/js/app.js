@@ -28,7 +28,7 @@ function atualizarProgressBar(respondidas) {
 document.getElementById('form-identificacao').addEventListener('submit', async (e) => {
   e.preventDefault();
 
-  const campos = ['campo-nome', 'campo-email', 'campo-cargo', 'campo-area', 'campo-unidade'];
+  const campos = ['campo-nome', 'campo-email', 'campo-fone', 'campo-empresa', 'campo-cargo', 'campo-area', 'campo-estado', 'campo-cidade'];
   let valido = true;
   campos.forEach((id) => {
     const el = document.getElementById(id);
@@ -80,7 +80,7 @@ document.getElementById('form-identificacao').addEventListener('submit', async (
   iniciarTeste(email, false);
 });
 
-['campo-nome', 'campo-email', 'campo-cargo', 'campo-area', 'campo-unidade'].forEach((id) => {
+['campo-nome', 'campo-email', 'campo-fone', 'campo-empresa', 'campo-cargo', 'campo-area', 'campo-estado', 'campo-cidade'].forEach((id) => {
   document.getElementById(id).addEventListener('input', () => {
     document.getElementById(id).classList.remove('campo-erro');
     document.getElementById('msg-campos-obrigatorios').classList.add('oculto');
@@ -120,11 +120,14 @@ function mostrarOpcoesDuplicado(email, dadosAnteriores) {
 
 function iniciarTeste(email, override) {
   userData = {
-    nome:     document.getElementById('campo-nome').value.trim(),
+    nome:    document.getElementById('campo-nome').value.trim(),
     email,
-    cargo:    document.getElementById('campo-cargo').value.trim(),
-    area:     document.getElementById('campo-area').value.trim(),
-    unidade:  document.getElementById('campo-unidade').value.trim(),
+    fone:    document.getElementById('campo-fone').value.trim(),
+    empresa: document.getElementById('campo-empresa').value.trim(),
+    cargo:   document.getElementById('campo-cargo').value.trim(),
+    area:    document.getElementById('campo-area').value.trim(),
+    estado:  document.getElementById('campo-estado').value.trim(),
+    cidade:  document.getElementById('campo-cidade').value.trim(),
     override: !!override,
   };
 
