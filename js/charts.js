@@ -10,19 +10,17 @@ const quadrantPlugin = {
 
     ctx.save();
 
-    // Fundos dos quadrantes
     const backgrounds = [
-      { color: 'rgba(204, 68, 0, 0.08)',   x: left,  y: midY,  w: midX - left,  h: bottom - midY },  // oper.
-      { color: 'rgba(26, 82, 118, 0.08)',  x: midX,  y: midY,  w: right - midX, h: bottom - midY },  // exec.
-      { color: 'rgba(183, 119, 13, 0.08)', x: left,  y: top,   w: midX - left,  h: midY - top   },   // com.
-      { color: 'rgba(26, 107, 69, 0.08)',  x: midX,  y: top,   w: right - midX, h: midY - top   },   // líder
+      { color: 'rgba(204, 68, 0, 0.08)',   x: left,  y: midY,  w: midX - left,  h: bottom - midY },
+      { color: 'rgba(26, 82, 118, 0.08)',  x: midX,  y: midY,  w: right - midX, h: bottom - midY },
+      { color: 'rgba(183, 119, 13, 0.08)', x: left,  y: top,   w: midX - left,  h: midY - top   },
+      { color: 'rgba(26, 107, 69, 0.08)',  x: midX,  y: top,   w: right - midX, h: midY - top   },
     ];
     backgrounds.forEach(({ color, x: bx, y: by, w, h }) => {
       ctx.fillStyle = color;
       ctx.fillRect(bx, by, w, h);
     });
 
-    // Linhas divisórias tracejadas
     ctx.strokeStyle = 'rgba(0,0,0,0.2)';
     ctx.setLineDash([5, 5]);
     ctx.lineWidth = 1;
@@ -83,22 +81,22 @@ function renderarMapaHEDRA(canvasId, eixoX, eixoY, perfil) {
         legend: { display: false },
         tooltip: {
           callbacks: {
-            label: (item) => `Direção: ${item.parsed.x.toFixed(0)} · Impacto: ${item.parsed.y.toFixed(0)}`,
+            label: (item) => `Direção: ${item.parsed.x.toFixed(0)}% · Impacto: ${item.parsed.y.toFixed(0)}%`,
           },
         },
       },
       scales: {
         x: {
-          min: 0, max: 140,
+          min: 0, max: 100,
           title: { display: true, text: 'Direção →', font: { size: 11 } },
           grid: { color: 'rgba(0,0,0,0.05)' },
-          ticks: { maxTicksLimit: 6 },
+          ticks: { maxTicksLimit: 6, callback: (v) => v + '%' },
         },
         y: {
-          min: 0, max: 140,
+          min: 0, max: 100,
           title: { display: true, text: 'Impacto →', font: { size: 11 } },
           grid: { color: 'rgba(0,0,0,0.05)' },
-          ticks: { maxTicksLimit: 6 },
+          ticks: { maxTicksLimit: 6, callback: (v) => v + '%' },
         },
       },
     },
@@ -109,20 +107,12 @@ function renderarDimensoes(canvasId, scores) {
   const ctx = document.getElementById(canvasId).getContext('2d');
   if (chartDimensoes) { chartDimensoes.destroy(); chartDimensoes = null; }
 
-  // Converter escala 0–140 para percentual 0–100%
-  const pct = (v) => Math.round((v / 140) * 100);
-
   chartDimensoes = new Chart(ctx, {
     type: 'bar',
     data: {
       labels: ['Autodomínio', 'Direção', 'Influência', 'Maestria'],
       datasets: [{
-        data: [
-          pct(scores.autodominio),
-          pct(scores.direcao),
-          pct(scores.influencia),
-          pct(scores.maestria),
-        ],
+        data: [scores.autodominio, scores.direcao, scores.influencia, scores.maestria],
         backgroundColor: ['#8B1A1A', '#C8961A', '#1A5276', '#1A6B45'],
         borderRadius: 4,
         borderSkipped: false,

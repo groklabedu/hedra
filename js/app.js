@@ -1,6 +1,6 @@
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbylXejuMSFfudVko4KNyECI18LgDCcu7WN4tWgmnE8zUiAqhwCHjUinJkEwyJMnbuT4/exec';
 
-const TOTAL_PERGUNTAS = 48; // 12 por bloco × 4 blocos
+const TOTAL_PERGUNTAS = 48;
 const PERGUNTAS_POR_BLOCO = 12;
 
 let userData = {};
@@ -292,6 +292,7 @@ async function enviarDados() {
     ...scoreData,
     perfilNome: PERFIS[scoreData.perfil].nome,
     respostaAberta,
+    
   };
 
   try {
@@ -324,8 +325,8 @@ function renderizarResultado(scores) {
 
   document.getElementById('perfil-descricao').textContent = perfil.descricao;
 
-  // Exibir como percentual (escala 0–140 → 0–100%)
-  const pct = (v) => Math.round((v / MAX_SCORE) * 100) + '%';
+  // Scores já são percentuais (0–100)
+  const pct = (v) => v + '%';
   document.getElementById('pct-autodominio').textContent = pct(scores.autodominio);
   document.getElementById('pct-direcao').textContent     = pct(scores.direcao);
   document.getElementById('pct-influencia').textContent  = pct(scores.influencia);

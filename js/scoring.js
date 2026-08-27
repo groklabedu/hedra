@@ -1,12 +1,15 @@
-// ── Perguntas armadilha (invertidas + peso 2) ────────────────────────────────
-// São as perguntas 11 e 12 de cada bloco (IDs 1-based)
-const TRAP_IDS = new Set([11, 12, 23, 24, 35, 36, 47, 48]);
+// Mapeamento questão → dimensão (conforme especificação HEDRA 2.0)
+const AUTODOMINIO_IDS = new Set([1, 5, 10, 14, 18, 21, 27, 31, 33, 37, 41, 46]);
+const DIRECAO_IDS     = new Set([2, 6,  9, 13, 17, 22, 28, 30, 35, 38, 42, 45]);
+const INFLUENCIA_IDS  = new Set([3, 7, 11, 15, 19, 23, 25, 29, 34, 39, 43, 47]);
+const MAESTRIA_IDS    = new Set([4, 8, 12, 16, 20, 24, 26, 32, 36, 40, 44, 48]);
 
-// Escala por dimensão: 0–140
-//   10 perguntas normais  × 10 = 100
-//   2 perguntas armadilha × (10 × 2) = 40
-const MAX_SCORE = 140;
-const THRESHOLD = 90; // ponto de corte baixo/alto (~64% de 140)
+// Questões invertidas: pontuação = 10 − resposta (sem peso extra)
+const INVERTIDAS = new Set([5, 9, 11, 12, 17, 21, 23, 24, 29, 33, 35, 36, 41, 45, 47, 48]);
+
+const MAX_DIM   = 120; // 12 questões × 10
+const THRESHOLD = 70;  // corte dos quadrantes em %
+const PISO_LIDER = 60; // todas as dimensões ≥ 60% para ser Líder
 
 const PERFIS = {
   operador: {
@@ -35,24 +38,42 @@ function calcularScore(respostas) {
   let autodominio = 0, direcao = 0, influencia = 0, maestria = 0;
 
   respostas.forEach((val, i) => {
-    const id     = i + 1; // 1-based
-    const isTrap = TRAP_IDS.has(id);
-    const pontos = isTrap ? (10 - val) * 2 : val;
+    const id     = i + 1;
+    const pontos = INVERTIDAS.has(id) ? (10 - val) : val;
 
-    if      (id <= 12) autodominio += pontos;
-    else if (id <= 24) direcao     += pontos;
-    else if (id <= 36) influencia  += pontos;
-    else               maestria    += pontos;
+    if      (AUTODOMINIO_IDS.has(id)) autodominio += pontos;
+    else if (DIRECAO_IDS.has(id))     direcao     += pontos;
+    else if (INFLUENCIA_IDS.has(id))  influencia  += pontos;
+    else if (MAESTRIA_IDS.has(id))    maestria    += pontos;
   });
 
-  const eixoX = direcao;                        // 0–140
-  const eixoY = (influencia + maestria) / 2;    // 0–140
+  // Converter para percentual 0–100
+  const pctAuto = Math.round((autodominio / MAX_DIM) * 100);
+  const pctDir  = Math.round((direcao     / MAX_DIM) * 100);
+  const pctInf  = Math.round((influencia  / MAX_DIM) * 100);
+  const pctMae  = Math.round((maestria    / MAX_DIM) * 100);
+
+  const eixoX = pctDir;
+  const eixoY = Math.round((pctInf + pctMae) / 2);
 
   let perfil;
   if      (eixoX <  THRESHOLD && eixoY <  THRESHOLD) perfil = 'operador';
   else if (eixoX >= THRESHOLD && eixoY <  THRESHOLD) perfil = 'executor';
   else if (eixoX <  THRESHOLD && eixoY >= THRESHOLD) perfil = 'comunicador';
-  else                                                perfil = 'lider';
+  else {
+    // Candidato a Líder: todas as 4 dimensões devem estar ≥ 60%
+    const todasAcimaDoPiso = pctAuto >= PISO_LIDER && pctDir >= PISO_LIDER
+                          && pctInf  >= PISO_LIDER && pctMae >= PISO_LIDER;
+    perfil = todasAcimaDoPiso ? 'lider' : 'executor';
+  }
 
-  return { autodominio, direcao, influencia, maestria, eixoX, eixoY, perfil };
+  return {
+    autodominio: pctAuto,
+    direcao:     pctDir,
+    influencia:  pctInf,
+    maestria:    pctMae,
+    eixoX,
+    eixoY,
+    perfil,
+  };
 }
