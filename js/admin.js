@@ -1,5 +1,10 @@
-// Configurar a mesma URL e chave do Apps Script
-const ADMIN_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbylXejuMSFfudVko4KNyECI18LgDCcu7WN4tWgmnE8zUiAqhwCHjUinJkEwyJMnbuT4/exec';
+const SUPABASE_URL = 'https://ilpspfqkdgbzvjesdzmv.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlscHNwZnFrZGdienZqZXNkem12Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAzNTYzNDEsImV4cCI6MjEwNTkzMjM0MX0.4FTajA7ZGARYPs0cxbvQBdmEZP87qk_Ql1UoNO6KTGI';
+const SB_HEADERS = {
+  'apikey': SUPABASE_KEY,
+  'Authorization': `Bearer ${SUPABASE_KEY}`,
+  'Content-Type': 'application/json',
+};
 const ADMIN_KEY = 'HEDRA@admin2026';
 
 let dadosAdmin = [];
@@ -28,53 +33,49 @@ async function carregarDados() {
   const status = document.getElementById('status-carregando');
   status.textContent = 'Carregando dados…';
 
-  if (ADMIN_APPS_SCRIPT_URL === 'COLE_AQUI_A_URL_DO_APPS_SCRIPT') {
-    status.textContent = 'URL do Apps Script não configurada.';
-    return;
-  }
-
   try {
-    const res = await fetch(`${ADMIN_APPS_SCRIPT_URL}?key=${encodeURIComponent(ADMIN_KEY)}`);
-    const json = await res.json();
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/respostas?select=*&order=created_at.desc`,
+      { headers: SB_HEADERS }
+    );
 
-    if (json.status === 'unauthorized') {
-      status.textContent = 'Chave inválida no servidor.';
-      return;
-    }
-    if (json.status !== 'ok') {
+    if (!res.ok) {
       status.textContent = 'Erro ao carregar dados.';
       return;
     }
 
+    const rows = await res.json();
     status.textContent = '';
-    const linhas = json.data;
-    // Linha 0 = cabeçalhos; dados a partir da linha 1
-    dadosAdmin = linhas.slice(1).map((row) => {
-      const p = resolverPerfil(row[12] || '');
+
+    dadosAdmin = rows.map((row) => {
+      const p = resolverPerfil(row.perfil || '');
       return {
-        data:      row[0],
-        nome:      row[1],
-        email:     row[2],
-        cargo:     row[3],
-        area:      row[4],
-        unidade:   row[5],
-        autodominio: row[6],
-        direcao:   row[7],
-        influencia: row[8],
-        maestria:  row[9],
-        eixoX:     row[10],
-        eixoY:     row[11],
-        perfil:    p.key,
+        id:         row.id,
+        data:       row.created_at,
+        nome:       row.nome,
+        email:      row.email,
+        cargo:      row.cargo,
+        area:       row.area,
+        empresa:    row.empresa,
+        estado:     row.estado,
+        cidade:     row.cidade,
+        autodominio: row.autodominio,
+        direcao:    row.direcao,
+        influencia: row.influencia,
+        maestria:   row.maestria,
+        eixoX:      row.eixo_x,
+        eixoY:      row.eixo_y,
+        perfil:     p.key,
         perfilNome: p.nome,
         perfilCor:  p.cor,
-        respostaAberta: row[13],
+        respostaAberta: row.resposta_aberta,
       };
     });
 
     limparSelecao();
     renderizarPainel();
   } catch (err) {
-    status.textContent = 'Erro de conexão. Verifique a URL e tente novamente.';
+    status.textContent = 'Erro de conexão.';
     console.error(err);
   }
 }
@@ -122,14 +123,14 @@ function renderizarPainel(filtro = 'todos') {
   if (chartPizzaAdmin) { chartPizzaAdmin.destroy(); }
   chartPizzaAdmin = renderarPizzaAdmin('canvas-pizza', pizzaDados);
 
-  // Distribuição por unidade
-  const porUnidade = {};
+  // Distribuição por empresa
+  const porEmpresa = {};
   dadosAdmin.forEach((d) => {
-    const u = d.unidade || 'Não informado';
-    porUnidade[u] = (porUnidade[u] || 0) + 1;
+    const u = d.empresa || 'Não informado';
+    porEmpresa[u] = (porEmpresa[u] || 0) + 1;
   });
   const unidadeEl = document.getElementById('lista-unidades');
-  unidadeEl.innerHTML = Object.entries(porUnidade)
+  unidadeEl.innerHTML = Object.entries(porEmpresa)
     .sort((a, b) => b[1] - a[1])
     .map(([u, n]) => `<li><strong>${u}</strong>: ${n}</li>`)
     .join('');
@@ -153,18 +154,17 @@ function renderizarTabela(dados) {
 
   dados.forEach((d) => {
     const dataStr = d.data ? new Date(d.data).toLocaleDateString('pt-BR') : '—';
-    const emailSafe = (d.email || '').toLowerCase();
     const tr = document.createElement('tr');
-    tr.dataset.email = emailSafe;
+    tr.dataset.id = d.id;
     tr.innerHTML = `
       <td class="col-check">
-        <input type="checkbox" class="check-linha" data-email="${emailSafe}" title="Selecionar">
+        <input type="checkbox" class="check-linha" data-id="${d.id}" title="Selecionar">
       </td>
       <td>${dataStr}</td>
       <td>${d.nome}</td>
       <td>${d.email}</td>
       <td>${d.cargo}</td>
-      <td>${d.unidade}</td>
+      <td>${d.empresa || '—'}</td>
       <td>
         <span class="badge-perfil" style="background:${d.perfilCor}20;color:${d.perfilCor};border:1px solid ${d.perfilCor}40">
           ${d.perfilNome}
@@ -173,7 +173,7 @@ function renderizarTabela(dados) {
       <td>${Number(d.eixoX).toFixed(0)} / ${Number(d.eixoY).toFixed(0)}</td>
       <td class="resposta-aberta" title="${(d.respostaAberta || '').replace(/"/g, '&quot;')}">${d.respostaAberta || '—'}</td>
       <td class="col-acoes">
-        <button class="btn-lixeira" data-email="${emailSafe}" title="Excluir este registro">🗑</button>
+        <button class="btn-lixeira" data-id="${d.id}" title="Excluir este registro">🗑</button>
       </td>
     `;
     tbody.appendChild(tr);
@@ -187,9 +187,9 @@ function renderizarTabela(dados) {
   // Listeners dos botões de lixeira individuais
   tbody.querySelectorAll('.btn-lixeira').forEach((btn) => {
     btn.addEventListener('click', () => {
-      const email = btn.dataset.email;
-      const nome  = dadosAdmin.find((d) => d.email.toLowerCase() === email)?.nome || email;
-      confirmarExclusao([email], `Excluir o registro de "${nome}"?`);
+      const id   = btn.dataset.id;
+      const nome = dadosAdmin.find((d) => d.id === id)?.nome || id;
+      confirmarExclusao([id], `Excluir o registro de "${nome}"?`);
     });
   });
 }
@@ -208,7 +208,6 @@ function atualizarBarraSelecao() {
     barra.classList.remove('visivel');
   }
 
-  // Atualizar estado do "selecionar todos"
   const total = document.querySelectorAll('.check-linha').length;
   const checkTodos = document.getElementById('check-todos');
   if (checkTodos) {
@@ -235,30 +234,30 @@ document.getElementById('btn-cancelar-selecao').addEventListener('click', limpar
 
 // Botão excluir selecionados
 document.getElementById('btn-excluir-selecionados').addEventListener('click', () => {
-  const emails = [...document.querySelectorAll('.check-linha:checked')].map((cb) => cb.dataset.email);
-  if (emails.length === 0) return;
-  confirmarExclusao(emails, `Excluir ${emails.length} registro${emails.length > 1 ? 's' : ''} selecionado${emails.length > 1 ? 's' : ''}?`);
+  const ids = [...document.querySelectorAll('.check-linha:checked')].map((cb) => cb.dataset.id);
+  if (ids.length === 0) return;
+  confirmarExclusao(ids, `Excluir ${ids.length} registro${ids.length > 1 ? 's' : ''} selecionado${ids.length > 1 ? 's' : ''}?`);
 });
 
-async function confirmarExclusao(emails, mensagem) {
+async function confirmarExclusao(ids, mensagem) {
   if (!confirm(`${mensagem}\n\nEssa ação não pode ser desfeita.`)) return;
 
   const status = document.getElementById('status-carregando');
   status.textContent = 'Excluindo…';
 
   try {
-    const res = await fetch(ADMIN_APPS_SCRIPT_URL, {
-      method: 'POST',
-      body: JSON.stringify({ action: 'deleteRows', key: ADMIN_KEY, emails }),
-    });
-    const json = await res.json();
+    const idList = ids.map((id) => `"${id}"`).join(',');
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/respostas?id=in.(${idList})`,
+      { method: 'DELETE', headers: SB_HEADERS }
+    );
 
-    if (json.status === 'ok') {
-      status.textContent = `${json.deleted} registro${json.deleted !== 1 ? 's' : ''} excluído${json.deleted !== 1 ? 's' : ''}.`;
+    if (res.ok) {
+      status.textContent = `${ids.length} registro${ids.length !== 1 ? 's' : ''} excluído${ids.length !== 1 ? 's' : ''}.`;
       setTimeout(() => { status.textContent = ''; }, 3000);
-      await carregarDados(); // recarregar tudo do servidor
+      await carregarDados();
     } else {
-      status.textContent = 'Erro ao excluir: ' + (json.message || json.status);
+      status.textContent = 'Erro ao excluir.';
     }
   } catch (err) {
     status.textContent = 'Erro de conexão ao excluir.';
@@ -279,7 +278,7 @@ function aplicarFiltros() {
   if (perfil !== 'todos') filtrados = filtrados.filter((d) => d.perfil === perfil);
   if (busca) {
     filtrados = filtrados.filter((d) =>
-      [d.nome, d.email, d.cargo, d.unidade, d.area].some((v) =>
+      [d.nome, d.email, d.cargo, d.empresa, d.area, d.estado, d.cidade].some((v) =>
         (v || '').toLowerCase().includes(busca)
       )
     );
@@ -290,10 +289,11 @@ function aplicarFiltros() {
 // ─── Exportar CSV ────────────────────────────────────────────────────────────
 
 document.getElementById('btn-exportar-csv').addEventListener('click', () => {
-  const headers = ['Data', 'Nome', 'Email', 'Cargo', 'Área', 'Unidade', 'Autodomínio', 'Direção', 'Influência', 'Maestria', 'Eixo X', 'Eixo Y', 'Perfil', 'Resposta Aberta'];
+  const headers = ['Data', 'Nome', 'Email', 'Fone', 'Empresa', 'Cargo', 'Área', 'Estado', 'Cidade', 'Autodomínio', 'Direção', 'Influência', 'Maestria', 'Eixo X', 'Eixo Y', 'Perfil', 'Resposta Aberta'];
   const rows = dadosAdmin.map((d) => [
     d.data ? new Date(d.data).toLocaleDateString('pt-BR') : '',
-    d.nome, d.email, d.cargo, d.area, d.unidade,
+    d.nome, d.email, d.fone || '', d.empresa || '', d.cargo, d.area,
+    d.estado || '', d.cidade || '',
     d.autodominio, d.direcao, d.influencia, d.maestria,
     d.eixoX, d.eixoY, d.perfil,
     (d.respostaAberta || '').replace(/"/g, '""'),

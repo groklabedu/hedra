@@ -1,4 +1,10 @@
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbylXejuMSFfudVko4KNyECI18LgDCcu7WN4tWgmnE8zUiAqhwCHjUinJkEwyJMnbuT4/exec';
+const SUPABASE_URL = 'https://ilpspfqkdgbzvjesdzmv.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlscHNwZnFrZGdienZqZXNkem12Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAzNTYzNDEsImV4cCI6MjEwNTkzMjM0MX0.4FTajA7ZGARYPs0cxbvQBdmEZP87qk_Ql1UoNO6KTGI';
+const SB_HEADERS = {
+  'apikey': SUPABASE_KEY,
+  'Authorization': `Bearer ${SUPABASE_KEY}`,
+  'Content-Type': 'application/json',
+};
 
 const TOTAL_PERGUNTAS = 48;
 const PERGUNTAS_POR_BLOCO = 12;
@@ -57,10 +63,13 @@ document.getElementById('form-identificacao').addEventListener('submit', async (
   btnSubmit.disabled = true;
 
   try {
-    const res = await fetch(`${APPS_SCRIPT_URL}?action=getByEmail&email=${encodeURIComponent(email)}`);
-    const json = await res.json();
-    if (json.status === 'found') {
-      mostrarOpcoesDuplicado(email, json.data);
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/respostas?email=eq.${encodeURIComponent(email)}&select=*&limit=1`,
+      { headers: SB_HEADERS }
+    );
+    const rows = await res.json();
+    if (rows.length > 0) {
+      mostrarOpcoesDuplicado(email, rows[0]);
       return;
     }
     if (jaFez.includes(email)) {
@@ -100,9 +109,9 @@ function mostrarOpcoesDuplicado(email, dadosAnteriores) {
         direcao:     Number(dadosAnteriores.direcao),
         influencia:  Number(dadosAnteriores.influencia),
         maestria:    Number(dadosAnteriores.maestria),
-        eixoX:       Number(dadosAnteriores.eixoX),
-        eixoY:       Number(dadosAnteriores.eixoY),
-        perfil:      dadosAnteriores.perfilKey,
+        eixoX:       Number(dadosAnteriores.eixo_x),
+        eixoY:       Number(dadosAnteriores.eixo_y),
+        perfil:      dadosAnteriores.perfil,
       };
       renderizarResultado(scoreData);
       mostrarTela('tela-resultado');
@@ -288,21 +297,40 @@ async function finalizarTeste() {
 
 async function enviarDados() {
   const payload = {
-    ...userData,
-    ...scoreData,
-    perfilNome: PERFIS[scoreData.perfil].nome,
-    respostaAberta,
-    
+    nome:            userData.nome,
+    email:           userData.email,
+    fone:            userData.fone,
+    empresa:         userData.empresa,
+    cargo:           userData.cargo,
+    area:            userData.area,
+    estado:          userData.estado,
+    cidade:          userData.cidade,
+    autodominio:     scoreData.autodominio,
+    direcao:         scoreData.direcao,
+    influencia:      scoreData.influencia,
+    maestria:        scoreData.maestria,
+    eixo_x:          scoreData.eixoX,
+    eixo_y:          scoreData.eixoY,
+    perfil:          scoreData.perfil,
+    perfil_nome:     PERFIS[scoreData.perfil].nome,
+    resposta_aberta: respostaAberta,
   };
 
   try {
-    const res = await fetch(APPS_SCRIPT_URL, {
+    if (userData.override) {
+      await fetch(
+        `${SUPABASE_URL}/rest/v1/respostas?email=eq.${encodeURIComponent(userData.email)}`,
+        { method: 'DELETE', headers: SB_HEADERS }
+      );
+    }
+
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/respostas`, {
       method: 'POST',
+      headers: { ...SB_HEADERS, 'Prefer': 'return=minimal' },
       body: JSON.stringify(payload),
     });
-    const json = await res.json();
 
-    if (json.status === 'ok') {
+    if (res.ok) {
       const jaFez = JSON.parse(localStorage.getItem('hedra_participantes') || '[]');
       if (!jaFez.includes(userData.email)) {
         jaFez.push(userData.email);
