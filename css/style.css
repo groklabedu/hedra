@@ -598,3 +598,466 @@ textarea { resize: vertical; }
   .chart-wrapper { height: 300px; }
   .chart-wrapper-bar { height: 200px; }
 }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   RESULTADO PAGINADO — rp-*
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Cabeçalho de navegação ────────────────────────────────────────────────── */
+.rp-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px 0;
+  position: sticky;
+  top: 0;
+  background: var(--cor-fundo);
+  z-index: 10;
+  border-bottom: 1px solid var(--cor-borda);
+  padding-bottom: 12px;
+}
+
+.rp-dots {
+  display: flex;
+  gap: 6px;
+}
+
+.rp-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--cor-borda);
+  transition: all 0.3s;
+  cursor: pointer;
+}
+
+.rp-dot.ativo {
+  background: var(--cor-principal);
+  transform: scale(1.4);
+}
+
+.rp-dot.concluido {
+  background: var(--cor-dourada);
+}
+
+.rp-pagina-num {
+  font-size: 0.78rem;
+  color: #999;
+  font-weight: 600;
+}
+
+/* ── Páginas ────────────────────────────────────────────────────────────────── */
+.rp-pages {
+  overflow: hidden;
+}
+
+.rp-page {
+  display: none;
+}
+
+.rp-page.ativa {
+  display: block;
+  animation: rpFadeUp 0.38s ease both;
+}
+
+.rp-page.entrando-dir {
+  animation: rpSlideInDir 0.38s ease both;
+}
+
+.rp-page.entrando-esq {
+  animation: rpSlideInEsq 0.38s ease both;
+}
+
+@keyframes rpFadeUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes rpSlideInDir {
+  from { opacity: 0; transform: translateX(40px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes rpSlideInEsq {
+  from { opacity: 0; transform: translateX(-40px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* ── Imagem hero de cada página ─────────────────────────────────────────────── */
+.rp-img-wrap {
+  width: 100%;
+  height: 200px;
+  overflow: hidden;
+  background: var(--cor-borda);
+}
+
+.rp-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* ── Conteúdo interno ───────────────────────────────────────────────────────── */
+.rp-content {
+  padding: 20px 16px 32px;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.rp-supertitulo {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--cor-dourada);
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.rp-titulo-pagina {
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: var(--cor-principal);
+  line-height: 1.2;
+  margin-bottom: 20px;
+}
+
+.rp-titulo-secao {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--cor-principal);
+  line-height: 1.25;
+  margin-bottom: 4px;
+}
+
+.rp-texto-secundario {
+  font-size: 0.85rem;
+  color: #888;
+  margin-bottom: 16px;
+}
+
+.rp-headline {
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: #555;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+
+.rp-texto {
+  font-size: 0.92rem;
+  line-height: 1.7;
+  color: #333;
+  margin-bottom: 12px;
+}
+
+/* ── Campos lista (página 1) ────────────────────────────────────────────────── */
+.rp-campos-lista {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 16px 0;
+}
+
+.rp-campo-item {
+  border: 1.5px solid;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-align: center;
+  line-height: 1.3;
+}
+
+.rp-destaque-box {
+  background: linear-gradient(135deg, #8B1A1A08, #C8961A08);
+  border: 1px solid var(--cor-dourada);
+  border-radius: 10px;
+  padding: 16px;
+  margin-top: 20px;
+}
+
+.rp-destaque-titulo {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--cor-dourada);
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+/* ── Mapa HEDRA (página 2) ──────────────────────────────────────────────────── */
+.rp-mapa-wrap {
+  position: relative;
+  height: 240px;
+  margin-bottom: 20px;
+}
+
+.rp-mapa-wrap canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* ── Cards de perfil (página 2) ─────────────────────────────────────────────── */
+.rp-perfis-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.rp-perfil-card {
+  border: 1.5px solid;
+  border-radius: 10px;
+  padding: 12px 14px;
+  position: relative;
+  transition: all 0.2s;
+}
+
+.rp-perfil-card.ativo {
+  padding-top: 28px;
+}
+
+.rp-perfil-card-badge {
+  position: absolute;
+  top: -1px;
+  left: 12px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: 0 0 6px 6px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.rp-perfil-card-nome {
+  font-size: 0.9rem;
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+
+.rp-perfil-card-resumo {
+  font-size: 0.8rem;
+  line-height: 1.55;
+  color: #555;
+}
+
+/* ── Dimensões mini (página 3) ──────────────────────────────────────────────── */
+.rp-dimensoes-mini {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 16px 0;
+}
+
+.rp-dim {
+  background: #fff;
+  border: 1px solid var(--cor-borda);
+  border-radius: 8px;
+  padding: 10px 12px;
+  text-align: center;
+}
+
+.rp-dim-label {
+  display: block;
+  font-size: 0.72rem;
+  color: #888;
+  margin-bottom: 2px;
+}
+
+.rp-dim-val {
+  display: block;
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--cor-principal);
+}
+
+/* ── Seções de conteúdo (página 3) ──────────────────────────────────────────── */
+.rp-secao-bloco {
+  background: #fff;
+  border: 1px solid var(--cor-borda);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+}
+
+.rp-pressao-box {
+  background: #FFF8EE;
+  border-color: var(--cor-dourada);
+}
+
+.rp-secao-titulo {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 800;
+  color: #777;
+  margin-bottom: 10px;
+}
+
+.rp-lista {
+  padding-left: 18px;
+  margin: 0;
+}
+
+.rp-lista li {
+  font-size: 0.88rem;
+  line-height: 1.6;
+  color: #333;
+  margin-bottom: 3px;
+}
+
+.rp-movimento-box {
+  border: 1.5px solid;
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-top: 4px;
+}
+
+.rp-prioridade {
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-top: 8px;
+  margin-bottom: 0;
+}
+
+/* ── Steps (página 4) ───────────────────────────────────────────────────────── */
+.rp-movimento-titulo {
+  font-size: 1.4rem;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  margin-bottom: 20px;
+}
+
+.rp-steps-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  background: #fff;
+  border: 1px solid var(--cor-borda);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 20px;
+}
+
+.rp-step {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.rp-step-num {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.rp-step-txt {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.rp-step-seta {
+  color: #bbb;
+  font-size: 0.85rem;
+}
+
+/* ── Perguntas (página 4) ───────────────────────────────────────────────────── */
+.rp-perguntas-secao {
+  background: #fff;
+  border: 1px solid var(--cor-borda);
+  border-radius: 10px;
+  padding: 14px 16px;
+}
+
+.rp-pergunta {
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: #333;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--cor-borda);
+}
+
+.rp-pergunta:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.rp-pergunta-num {
+  font-weight: 800;
+  font-size: 1rem;
+  margin-right: 4px;
+}
+
+/* ── Carta (página 5) ───────────────────────────────────────────────────────── */
+.rp-carta-box {
+  border: 1.5px solid;
+  border-radius: 10px;
+  padding: 20px;
+  margin: 20px 0;
+  background: #fff;
+}
+
+.rp-carta-saudacao {
+  font-size: 1.05rem;
+  font-weight: 800;
+  margin-bottom: 14px;
+}
+
+.rp-fechamento-final {
+  background: linear-gradient(135deg, #8B1A1A08, #C8961A08);
+  border: 1px solid var(--cor-dourada);
+  border-radius: 10px;
+  padding: 16px;
+  font-size: 0.88rem;
+  line-height: 1.7;
+  color: #444;
+  font-style: italic;
+  margin-bottom: 24px;
+}
+
+.rp-btns-download {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ── Botões de navegação ────────────────────────────────────────────────────── */
+.rp-nav-btns {
+  display: flex;
+  gap: 10px;
+  padding: 12px 16px 24px;
+  position: sticky;
+  bottom: 0;
+  background: var(--cor-fundo);
+  border-top: 1px solid var(--cor-borda);
+}
+
+.rp-nav-btns .btn-secundario {
+  flex: 0 0 auto;
+  width: auto;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+.rp-nav-btns .btn-primario {
+  flex: 1;
+}
+
+@media (min-width: 520px) {
+  .rp-img-wrap { height: 260px; }
+  .rp-content  { padding: 24px 24px 40px; }
+  .rp-mapa-wrap { height: 280px; }
+}

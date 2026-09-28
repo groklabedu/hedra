@@ -155,81 +155,25 @@
   <!-- ════════════════════════════════════════════════════════ TELA 3 ════ -->
   <div id="tela-resultado" class="tela">
 
-    <!-- Área exportável (sem position fixed/sticky) -->
-    <div id="resultado-exportavel">
+    <!-- Cabeçalho de navegação -->
+    <div class="rp-header">
+      <div class="rp-dots" id="rp-dots"></div>
+      <span class="rp-pagina-num" id="rp-pagina-num">1 / 5</span>
+    </div>
 
-      <!-- Cabeçalho da exportação -->
-      <div class="resultado-header-exportavel">
-        <p style="font-size:0.75rem;color:#888;margin-top:4px">Inventário HEDRA — Matriz de Maturidade da Liderança</p>
-      </div>
+    <!-- Páginas (conteúdo renderizado por JS) -->
+    <div class="rp-pages" id="rp-pages">
+      <div class="rp-page" id="rp-page-1"></div>
+      <div class="rp-page" id="rp-page-2"></div>
+      <div class="rp-page" id="rp-page-3"></div>
+      <div class="rp-page" id="rp-page-4"></div>
+      <div class="rp-page" id="rp-page-5"></div>
+    </div>
 
-      <div style="padding:0 16px">
-
-        <!-- Perfil -->
-        <div class="card secao-resultado" style="margin-top:0">
-          <h3>Seu perfil de liderança</h3>
-          <p class="perfil-nome" id="perfil-nome"></p>
-          <p class="perfil-descricao" id="perfil-descricao"></p>
-        </div>
-
-        <!-- Mapa HEDRA -->
-        <div class="card secao-resultado">
-          <h3>Mapa HEDRA</h3>
-          <div class="chart-wrapper">
-            <canvas id="canvas-mapa"></canvas>
-          </div>
-        </div>
-
-        <!-- Dimensões -->
-        <div class="card secao-resultado">
-          <h3>Composição das dimensões</h3>
-
-          <div class="dimensoes-grid">
-            <div class="dimensao-badge">
-              <span class="d-label">Autodomínio</span>
-              <span class="d-valor" id="pct-autodominio">—</span>
-              <span class="d-frase">"Eu consigo perceber quando estou no automático e escolher como responder."</span>
-            </div>
-            <div class="dimensao-badge">
-              <span class="d-label">Direção</span>
-              <span class="d-valor" id="pct-direcao">—</span>
-              <span class="d-frase">"Eu não apenas executo — eu defino o caminho e sustento decisões."</span>
-            </div>
-            <div class="dimensao-badge">
-              <span class="d-label">Influência</span>
-              <span class="d-valor" id="pct-influencia">—</span>
-              <span class="d-frase">"Eu me posiciono, conduzo conversas e mobilizo pessoas."</span>
-            </div>
-            <div class="dimensao-badge">
-              <span class="d-label">Maestria</span>
-              <span class="d-valor" id="pct-maestria">—</span>
-              <span class="d-frase">"Eu gero resultado através das pessoas — não apenas através de mim."</span>
-            </div>
-          </div>
-
-          <div class="chart-wrapper-bar">
-            <canvas id="canvas-dimensoes"></canvas>
-          </div>
-        </div>
-
-        <!-- Fechamento -->
-        <div class="card secao-resultado">
-          <div class="fechamento-box">
-            Lembre-se: A liderança não é fixa, é evolutiva! Seu resultado não define quem você é como líder — ele revela como você está liderando hoje. E liderança é construída diariamente, nas escolhas que você faz a partir dessa consciência.
-          </div>
-        </div>
-
-      </div><!-- /padding wrapper -->
-    </div><!-- /#resultado-exportavel -->
-
-    <!-- Botões fora da área de captura -->
-    <div class="botoes-exportar">
-      <button class="btn btn-secundario" id="btn-exportar-png">
-        Salvar como imagem (PNG)
-      </button>
-      <button class="btn btn-dourado" id="btn-exportar-pdf">
-        Salvar como PDF
-      </button>
+    <!-- Botões de navegação -->
+    <div class="rp-nav-btns">
+      <button class="btn btn-secundario" id="btn-rp-voltar" style="display:none">← Voltar</button>
+      <button class="btn btn-primario"   id="btn-rp-avancar">Próximo →</button>
     </div>
 
   </div><!-- /tela-resultado -->
@@ -244,6 +188,8 @@
   <script src="js/scoring.js"></script>
   <script src="js/charts.js"></script>
   <script src="js/export.js"></script>
+  <script src="js/resultado-content.js"></script>
+  <script src="js/resultado.js"></script>
   <script src="js/app.js"></script>
 
 </body>

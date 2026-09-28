@@ -342,33 +342,11 @@ async function enviarDados() {
   }
 }
 
-// ─── Tela 3: Resultado ───────────────────────────────────────────────────────
+// ─── Tela 3: Resultado paginado ──────────────────────────────────────────────
 
 function renderizarResultado(scores) {
-  const perfil = PERFIS[scores.perfil];
-
-  const nomePerfil = document.getElementById('perfil-nome');
-  nomePerfil.textContent = perfil.nome;
-  nomePerfil.style.color = perfil.cor;
-
-  document.getElementById('perfil-descricao').textContent = perfil.descricao;
-
-  // Scores já são percentuais (0–100)
-  const pct = (v) => v + '%';
-  document.getElementById('pct-autodominio').textContent = pct(scores.autodominio);
-  document.getElementById('pct-direcao').textContent     = pct(scores.direcao);
-  document.getElementById('pct-influencia').textContent  = pct(scores.influencia);
-  document.getElementById('pct-maestria').textContent    = pct(scores.maestria);
-
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      renderarMapaHEDRA('canvas-mapa', scores.eixoX, scores.eixoY, scores.perfil);
-      renderarDimensoes('canvas-dimensoes', scores);
-    });
-  });
+  inicializarNavResultado();
+  renderizarResultadoPaginado(scores, userData.nome || '');
 }
 
-// ─── Exportação ──────────────────────────────────────────────────────────────
-
-document.getElementById('btn-exportar-png').addEventListener('click', exportarPNG);
-document.getElementById('btn-exportar-pdf').addEventListener('click', exportarPDF);
+// Exportação via botões dentro da página 5 (ligados em resultado.js → renderP5)
