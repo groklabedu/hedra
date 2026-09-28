@@ -1061,3 +1061,122 @@ textarea { resize: vertical; }
   .rp-content  { padding: 24px 24px 40px; }
   .rp-mapa-wrap { height: 280px; }
 }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   DESKTOP — min-width 900px
+   ══════════════════════════════════════════════════════════════════════════ */
+@media (min-width: 900px) {
+
+  /* ── Identificação: intro + form lado a lado ─────────────────────────── */
+  #tela-identificacao .container {
+    max-width: 960px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto 1fr;
+    column-gap: 56px;
+    align-items: start;
+    padding-bottom: 64px;
+  }
+
+  #tela-identificacao .intro-box {
+    grid-column: 1;
+    grid-row: 1;
+    text-align: left;
+    padding: 40px 0 0;
+  }
+
+  #tela-identificacao .card.intro-texto {
+    grid-column: 1;
+    grid-row: 2;
+    margin-top: 16px;
+  }
+
+  #tela-identificacao .card:last-child {
+    grid-column: 2;
+    grid-row: 1 / -1;
+    margin-top: 32px;
+  }
+
+  /* ── Teste: manter estreito — sliders ficam inutilizáveis em 1200px ── */
+  #tela-teste .container {
+    max-width: 720px;
+  }
+
+  /* ── Resultado: rp-header fica abaixo do site header sticky ─────────── */
+  .rp-header {
+    top: 72px; /* altura do site header */
+    padding: 14px 56px;
+  }
+
+  .rp-dot     { width: 10px; height: 10px; }
+  .rp-pagina-num { font-size: 0.85rem; }
+
+  /* Permite que position:sticky funcione dentro das páginas */
+  .rp-pages { overflow: visible; }
+
+  /* ── Resultado: páginas em 2 colunas (ilustração | texto) ───────────── */
+  .rp-page.ativa {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    min-height: calc(100vh - 72px - 41px - 85px);
+  }
+
+  .rp-img-wrap {
+    flex: 0 0 360px;
+    height: calc(100vh - 72px - 41px - 85px); /* viewport - headers - nav */
+    position: sticky;
+    top: calc(72px + 41px); /* site header + rp-header */
+    align-self: flex-start;
+    overflow: hidden;
+  }
+
+  .rp-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+  }
+
+  .rp-content {
+    flex: 1;
+    padding: 40px 64px 60px;
+    max-width: none;
+    min-width: 0; /* evita overflow em flex */
+  }
+
+  /* ── Resultado: botões de navegação ─────────────────────────────────── */
+  .rp-nav-btns {
+    padding: 14px 56px;
+    justify-content: flex-end;
+    gap: 12px;
+  }
+
+  .rp-nav-btns .btn-primario {
+    flex: 0 0 auto;
+    width: auto;
+    min-width: 180px;
+  }
+
+  .rp-nav-btns .btn-secundario {
+    width: auto;
+    min-width: 140px;
+  }
+
+  /* ── Página 2: cards de perfil em grid 2×2 ──────────────────────────── */
+  .rp-perfis-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .rp-mapa-wrap { height: 320px; }
+
+  /* ── Página 5: botões de download em linha ───────────────────────────── */
+  .rp-btns-download {
+    flex-direction: row;
+    gap: 12px;
+  }
+
+  .rp-btns-download .btn { flex: 1; width: auto; }
+}
