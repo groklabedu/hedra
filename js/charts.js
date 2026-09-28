@@ -26,17 +26,17 @@ function renderarMapaHEDRA(canvasId, eixoX, eixoY, perfil) {
     lider:       ['Líder de', 'Influência Est.'],
   };
 
-  // Margens calculadas para manter a ponta do pin (22px) e topo (24px)
-  // dentro do card colorido (PAD=10px). Conversão: pixels → unidades de score.
+  // A PONTA do pin é a âncora (tip = y=0 no grupo SVG).
+  // Margens mínimas para tip ficar dentro do card colorido (PAD=10px).
   const THR = 70;
   const needsHighX = (perfil === 'executor' || perfil === 'lider');
   const needsHighY = (perfil === 'comunicador' || perfil === 'lider');
   const px = needsHighX
-    ? Math.min(Math.max(eixoX, THR + 5),  99)   // ponta esq (17px) + PAD → direita do MX
-    : Math.max(Math.min(eixoX, THR - 11),  1);   // ponta dir (17px) + PAD → esquerda do MX
+    ? Math.min(Math.max(eixoX, THR + 5),  99)
+    : Math.max(Math.min(eixoX, THR - 11),  1);
   const py = needsHighY
-    ? Math.min(Math.max(eixoY, THR + 7),  99)    // ponta inferior (22px) + PAD → acima de MY
-    : Math.max(Math.min(eixoY, THR - 16),  1);   // topo do pin (24px) + PAD → abaixo de MY
+    ? Math.min(Math.max(eixoY, THR + 2),  99)   // tip ≤ MY-PAD: ~2pts acima do THR
+    : Math.max(Math.min(eixoY, THR - 5),  1);   // tip ≥ MY+PAD: ~5pts abaixo do THR
 
   // Dimensões do SVG
   const VW = 400, VH = 360;
@@ -111,14 +111,14 @@ function renderarMapaHEDRA(canvasId, eixoX, eixoY, perfil) {
   <polygon points="${L-4},${T-7} ${L},${T-14} ${L+4},${T-7}" fill="#666"/>
   <text transform="rotate(-90,13,${(T+B)/2})" x="13" y="${(T+B)/2+4}" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11.5" fill="#555" font-weight="600">Impacto</text>
 
-  <!-- Pin -->
+  <!-- Pin (ponta = âncora em y=0; corpo sobe até y=-46) -->
   <g transform="translate(${pinX},${pinY})" filter="url(#pshadow-${uid})">
-    <ellipse cx="0" cy="3.5" rx="8" ry="3" fill="rgba(0,0,0,0.12)"/>
-    <path d="M0,-24 C-11,-24 -17,-14 -17,-7 C-17,5 0,22 0,22 C0,22 17,5 17,-7 C17,-14 11,-24 0,-24 Z"
+    <ellipse cx="0" cy="2" rx="7" ry="2.5" fill="rgba(0,0,0,0.15)"/>
+    <path d="M0,0 C0,0 -17,-17 -17,-29 C-17,-36 -11,-46 0,-46 C11,-46 17,-36 17,-29 C17,-17 0,0 0,0 Z"
       fill="#CC2200"/>
-    <path d="M0,-24 C-11,-24 -17,-14 -17,-7 C-17,5 0,22 0,22 C0,22 17,5 17,-7 C17,-14 11,-24 0,-24 Z"
+    <path d="M0,0 C0,0 -17,-17 -17,-29 C-17,-36 -11,-46 0,-46 C11,-46 17,-36 17,-29 C17,-17 0,0 0,0 Z"
       fill="none" stroke="white" stroke-width="1.5"/>
-    <circle cx="0" cy="-8" r="6.5" fill="rgba(255,255,255,0.4)"/>
+    <circle cx="0" cy="-30" r="6.5" fill="rgba(255,255,255,0.4)"/>
   </g>
 </svg>`;
 
