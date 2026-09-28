@@ -26,14 +26,14 @@ function renderarMapaHEDRA(canvasId, eixoX, eixoY, perfil) {
     lider:       ['Líder de', 'Influência Est.'],
   };
 
-  // Pin sempre no quadrante correto (clip com margem da borda)
+  // Posição real do pin; só corrige se o score colocaria no quadrante errado
   const THR = 70, M = 5;
   const px = (perfil === 'operador' || perfil === 'comunicador')
-    ? Math.min(Math.max(eixoX, M), THR - M)
-    : Math.min(Math.max(eixoX, THR + M), 100 - M);
+    ? Math.max(eixoX >= THR ? THR - M : eixoX, M)
+    : Math.min(eixoX < THR ? THR + M : eixoX, 100 - M);
   const py = (perfil === 'operador' || perfil === 'executor')
-    ? Math.min(Math.max(eixoY, M), THR - M)
-    : Math.min(Math.max(eixoY, THR + M), 100 - M);
+    ? Math.max(eixoY >= THR ? THR - M : eixoY, M)
+    : Math.min(eixoY < THR ? THR + M : eixoY, 100 - M);
 
   // Dimensões do SVG
   const VW = 400, VH = 360;
