@@ -232,14 +232,25 @@ function renderP5(pc, perfilInfo, nome) {
       </div>
 
       <div class="rp-btns-download">
-        <button class="btn btn-secundario" id="btn-rp-png">Salvar como imagem (PNG)</button>
-        <button class="btn btn-dourado" id="btn-rp-pdf">Salvar como PDF</button>
+        <button class="btn btn-dourado" id="btn-rp-pdf">Baixar relatório (PDF)</button>
       </div>
     </div>
   `;
 
-  document.getElementById('btn-rp-png').addEventListener('click', exportarRelatorio('png'));
-  document.getElementById('btn-rp-pdf').addEventListener('click', exportarRelatorio('pdf'));
+  document.getElementById('btn-rp-pdf').addEventListener('click', () => {
+    const btn = document.getElementById('btn-rp-pdf');
+    btn.textContent = 'Gerando PDF…';
+    btn.disabled = true;
+    try {
+      gerarPDF(scoreData, userData);
+    } catch (err) {
+      alert('Erro ao gerar PDF. Tente novamente.');
+      console.error(err);
+    } finally {
+      btn.textContent = 'Baixar relatório (PDF)';
+      btn.disabled = false;
+    }
+  });
 }
 
 // ─── Navegação entre páginas ─────────────────────────────────────────────────
