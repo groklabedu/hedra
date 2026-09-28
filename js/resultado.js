@@ -256,7 +256,8 @@ function rpMostrarPagina(nova, direcao) {
     }
   }
 
-  proxima.classList.add('ativa', direcao !== 'none' ? (direcao === 'frente' ? 'entrando-dir' : 'entrando-esq') : '');
+  proxima.classList.add('ativa');
+  if (direcao !== 'none') proxima.classList.add(direcao === 'frente' ? 'entrando-dir' : 'entrando-esq');
   if (direcao !== 'none') {
     requestAnimationFrame(() => {
       requestAnimationFrame(() => proxima.classList.remove('entrando-dir', 'entrando-esq'));
