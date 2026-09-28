@@ -1126,7 +1126,7 @@ textarea { resize: vertical; }
   }
 
   .rp-img-wrap {
-    flex: 0 0 280px;
+    flex: 0 0 360px;
     height: auto; /* altura natural da ilustração */
     position: sticky;
     top: calc(72px + 41px); /* site header + rp-header */
@@ -1143,7 +1143,7 @@ textarea { resize: vertical; }
 
   .rp-content {
     flex: 1;
-    padding: 40px 56px 60px;
+    padding: 40px 56px 100px; /* 100px garante espaço acima do sticky nav */
     max-width: none;
     min-width: 0; /* evita overflow em flex */
   }
