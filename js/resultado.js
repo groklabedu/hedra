@@ -237,12 +237,12 @@ function renderP5(pc, perfilInfo, nome) {
     </div>
   `;
 
-  document.getElementById('btn-rp-pdf').addEventListener('click', () => {
+  document.getElementById('btn-rp-pdf').addEventListener('click', async () => {
     const btn = document.getElementById('btn-rp-pdf');
     btn.textContent = 'Gerando PDF…';
     btn.disabled = true;
     try {
-      gerarPDF(scoreData, userData);
+      await gerarPDF(scoreData, userData);
     } catch (err) {
       alert('Erro ao gerar PDF. Tente novamente.');
       console.error(err);
