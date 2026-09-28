@@ -1,110 +1,125 @@
 let chartMapa = null;
 let chartDimensoes = null;
 
-const quadrantPlugin = {
-  id: 'quadrantPlugin',
-  beforeDraw(chart) {
-    const { ctx, chartArea: { left, top, right, bottom }, scales: { x, y } } = chart;
-    const midX = x.getPixelForValue(70);
-    const midY = y.getPixelForValue(70);
-
-    ctx.save();
-
-    const backgrounds = [
-      { color: 'rgba(204, 68, 0, 0.08)',   x: left,  y: midY,  w: midX - left,  h: bottom - midY },
-      { color: 'rgba(26, 82, 118, 0.08)',  x: midX,  y: midY,  w: right - midX, h: bottom - midY },
-      { color: 'rgba(183, 119, 13, 0.08)', x: left,  y: top,   w: midX - left,  h: midY - top   },
-      { color: 'rgba(26, 107, 69, 0.08)',  x: midX,  y: top,   w: right - midX, h: midY - top   },
-    ];
-    backgrounds.forEach(({ color, x: bx, y: by, w, h }) => {
-      ctx.fillStyle = color;
-      ctx.fillRect(bx, by, w, h);
-    });
-
-    ctx.strokeStyle = 'rgba(0,0,0,0.2)';
-    ctx.setLineDash([5, 5]);
-    ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(midX, top);    ctx.lineTo(midX, bottom); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(left, midY);   ctx.lineTo(right, midY);  ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.restore();
-  },
-
-  afterDraw(chart) {
-    const { ctx, chartArea: { left, top, right, bottom }, scales: { x, y } } = chart;
-    const midX = x.getPixelForValue(70);
-    const midY = y.getPixelForValue(70);
-    const pad = 6;
-
-    ctx.save();
-    ctx.font = 'bold 9px system-ui, sans-serif';
-    ctx.textAlign = 'center';
-
-    const labels = [
-      { text: ['Operador', 'Sobrecarregado'], color: '#CC4400', cx: (left + midX) / 2, cy: midY + pad + 9 },
-      { text: ['Executor', 'Eficiente'],      color: '#1A5276', cx: (midX + right) / 2, cy: midY + pad + 9 },
-      { text: ['Comunicador', 'Frágil'],       color: '#B7770D', cx: (left + midX) / 2, cy: top + pad + 9 },
-      { text: ['Líder de', 'Influência Est.'], color: '#1A6B45', cx: (midX + right) / 2, cy: top + pad + 9 },
-    ];
-
-    labels.forEach(({ text, color, cx, cy }) => {
-      ctx.fillStyle = color;
-      text.forEach((line, i) => ctx.fillText(line, cx, cy + i * 11));
-    });
-    ctx.restore();
-  },
-};
-
 function renderarMapaHEDRA(canvasId, eixoX, eixoY, perfil) {
-  const ctx = document.getElementById(canvasId).getContext('2d');
-
   if (chartMapa) { chartMapa.destroy(); chartMapa = null; }
 
-  chartMapa = new Chart(ctx, {
-    type: 'scatter',
-    plugins: [quadrantPlugin],
-    data: {
-      datasets: [{
-        label: 'Você',
-        data: [{ x: eixoX, y: eixoY }],
-        backgroundColor: PERFIS[perfil].cor,
-        borderColor: '#fff',
-        borderWidth: 2,
-        pointRadius: 10,
-        pointHoverRadius: 12,
-      }],
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          callbacks: {
-            label: (item) => `Direção: ${item.parsed.x.toFixed(0)}% · Impacto: ${item.parsed.y.toFixed(0)}%`,
-          },
-        },
-      },
-      scales: {
-        x: {
-          min: 0, max: 100,
-          title: { display: true, text: 'Direção →', font: { size: 11 } },
-          grid: { color: 'rgba(0,0,0,0.05)' },
-          ticks: { maxTicksLimit: 6, callback: (v) => v + '%' },
-        },
-        y: {
-          min: 0, max: 100,
-          title: { display: true, text: 'Impacto →', font: { size: 11 } },
-          grid: { color: 'rgba(0,0,0,0.05)' },
-          ticks: { maxTicksLimit: 6, callback: (v) => v + '%' },
-        },
-      },
-    },
-  });
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const container = canvas.parentElement;
+  canvas.style.display = 'none';
+
+  const oldSvg = container.querySelector('svg.hedra-mapa');
+  if (oldSvg) oldSvg.remove();
+
+  const COR = {
+    operador:    '#CC4400',
+    executor:    '#1A5276',
+    comunicador: '#B7770D',
+    lider:       '#1A6B45',
+  };
+
+  const NOMES = {
+    operador:    ['Operador', 'Sobrecarregado'],
+    executor:    ['Executor', 'Eficiente'],
+    comunicador: ['Comunicador', 'Frágil'],
+    lider:       ['Líder de', 'Influência Est.'],
+  };
+
+  // Pin sempre no quadrante correto (clip com margem da borda)
+  const THR = 70, M = 5;
+  const px = (perfil === 'operador' || perfil === 'comunicador')
+    ? Math.min(Math.max(eixoX, M), THR - M)
+    : Math.min(Math.max(eixoX, THR + M), 100 - M);
+  const py = (perfil === 'operador' || perfil === 'executor')
+    ? Math.min(Math.max(eixoY, M), THR - M)
+    : Math.min(Math.max(eixoY, THR + M), 100 - M);
+
+  // Dimensões do SVG
+  const VW = 400, VH = 360;
+  const L = 40, T = 12, R = 392, B = 328;
+  const CW = R - L, CH = B - T;
+  const MX = L + CW / 2, MY = T + CH / 2;
+
+  const sx = (s) => L + (s / 100) * CW;
+  const sy = (s) => B - (s / 100) * CH;
+  const pinX = sx(px), pinY = sy(py);
+
+  const uid = canvasId.replace(/[^a-z0-9]/gi, '');
+  const PAD = 10;
+
+  const QUADS = [
+    { id: 'comunicador', qx: L,  qy: T  },
+    { id: 'lider',       qx: MX, qy: T  },
+    { id: 'operador',    qx: L,  qy: MY },
+    { id: 'executor',    qx: MX, qy: MY },
+  ];
+  const qw = CW / 2, qh = CH / 2;
+
+  const svgStr = `<svg class="hedra-mapa" viewBox="0 0 ${VW} ${VH}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block">
+  <defs>
+    <pattern id="hatch-${uid}" patternUnits="userSpaceOnUse" width="10" height="10" patternTransform="rotate(45)">
+      <line x1="0" y1="0" x2="0" y2="10" stroke="#B8A88A" stroke-width="0.7" stroke-opacity="0.45"/>
+    </pattern>
+    <filter id="pshadow-${uid}">
+      <feDropShadow dx="0" dy="2" stdDeviation="2.5" flood-color="rgba(0,0,0,0.28)"/>
+    </filter>
+  </defs>
+
+  <!-- Fundo hachurado -->
+  <rect x="${L}" y="${T}" width="${CW}" height="${CH}" fill="url(#hatch-${uid})" rx="6"/>
+
+  <!-- Cards dos quadrantes -->
+  ${QUADS.map(({ id, qx, qy }) => {
+    const c = COR[id];
+    const ativo = id === perfil;
+    const cx = qx + qw / 2;
+    const cy = qy + qh / 2;
+    const lines = NOMES[id];
+    const lineH = 15;
+    const totalH = lines.length * lineH;
+    const ty = cy - totalH / 2 + lineH - 3;
+    return `
+  <rect x="${qx + PAD}" y="${qy + PAD}" width="${qw - PAD*2}" height="${qh - PAD*2}" rx="10"
+    fill="${c}" fill-opacity="${ativo ? 0.16 : 0.06}"
+    stroke="${c}" stroke-width="${ativo ? 2.5 : 1}" stroke-opacity="${ativo ? 0.65 : 0.22}"/>
+  ${lines.map((ln, i) => `<text x="${cx}" y="${ty + i * lineH}" text-anchor="middle"
+    font-family="system-ui,-apple-system,sans-serif" font-size="${ativo ? 11.5 : 10}" font-weight="700"
+    fill="${c}" fill-opacity="${ativo ? 1 : 0.5}">${ln}</text>`).join('')}`;
+  }).join('')}
+
+  <!-- Divisórias -->
+  <line x1="${MX}" y1="${T}" x2="${MX}" y2="${B}" stroke="rgba(0,0,0,0.18)" stroke-width="1.5" stroke-dasharray="5,5"/>
+  <line x1="${L}" y1="${MY}" x2="${R}" y2="${MY}" stroke="rgba(0,0,0,0.18)" stroke-width="1.5" stroke-dasharray="5,5"/>
+
+  <!-- Eixo X -->
+  <line x1="${L}" y1="${B}" x2="${R+7}" y2="${B}" stroke="#666" stroke-width="1.8"/>
+  <polygon points="${R+7},${B-4} ${R+14},${B} ${R+7},${B+4}" fill="#666"/>
+  <text x="${(L+R)/2}" y="${VH-2}" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11.5" fill="#555" font-weight="600">Direção</text>
+
+  <!-- Eixo Y -->
+  <line x1="${L}" y1="${B}" x2="${L}" y2="${T-7}" stroke="#666" stroke-width="1.8"/>
+  <polygon points="${L-4},${T-7} ${L},${T-14} ${L+4},${T-7}" fill="#666"/>
+  <text transform="rotate(-90,13,${(T+B)/2})" x="13" y="${(T+B)/2+4}" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11.5" fill="#555" font-weight="600">Impacto</text>
+
+  <!-- Pin -->
+  <g transform="translate(${pinX},${pinY})" filter="url(#pshadow-${uid})">
+    <ellipse cx="0" cy="3.5" rx="8" ry="3" fill="rgba(0,0,0,0.12)"/>
+    <path d="M0,-24 C-11,-24 -17,-14 -17,-7 C-17,5 0,22 0,22 C0,22 17,5 17,-7 C17,-14 11,-24 0,-24 Z"
+      fill="#CC2200"/>
+    <path d="M0,-24 C-11,-24 -17,-14 -17,-7 C-17,5 0,22 0,22 C0,22 17,5 17,-7 C17,-14 11,-24 0,-24 Z"
+      fill="none" stroke="white" stroke-width="1.5"/>
+    <circle cx="0" cy="-8" r="6.5" fill="rgba(255,255,255,0.4)"/>
+  </g>
+</svg>`;
+
+  container.insertAdjacentHTML('beforeend', svgStr);
 }
 
 function renderarDimensoes(canvasId, scores) {
-  const ctx = document.getElementById(canvasId).getContext('2d');
+  const el = document.getElementById(canvasId);
+  if (!el) return;
+  const ctx = el.getContext('2d');
   if (chartDimensoes) { chartDimensoes.destroy(); chartDimensoes = null; }
 
   chartDimensoes = new Chart(ctx, {
