@@ -41,8 +41,14 @@ function renderarMapaHEDRA(canvasId, eixoX, eixoY, perfil) {
   const CW = R - L, CH = B - T;
   const MX = L + CW / 2, MY = T + CH / 2;
 
-  const sx = (s) => L + (s / 100) * CW;
-  const sy = (s) => B - (s / 100) * CH;
+  // Mapeamento não-linear: threshold 70 = centro visual
+  // Garante que quem está em 49% no score fica bem dentro do quadrante inferior
+  const sx = (s) => s <= THR
+    ? L + (s / THR) * (MX - L)
+    : MX + ((s - THR) / (100 - THR)) * (R - MX);
+  const sy = (s) => s <= THR
+    ? B - (s / THR) * (B - MY)
+    : MY - ((s - THR) / (100 - THR)) * (MY - T);
   const pinX = sx(px), pinY = sy(py);
 
   const uid = canvasId.replace(/[^a-z0-9]/gi, '');
