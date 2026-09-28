@@ -1139,7 +1139,6 @@ textarea { resize: vertical; }
     width: 100%;
     height: auto; /* proporções naturais, sem corte */
     display: block;
-    mix-blend-mode: multiply; /* fundo branco some sobre #F9F7F5 */
   }
 
   .rp-content {

@@ -5,17 +5,17 @@ const RP_TOTAL = 5;
 
 // Imagens por página — coloque os arquivos em assets/resultado/
 const RP_IMGS = {
-  p1:             'assets/resultado/p1.jpg',
-  p2:             'assets/resultado/p2.jpg',
-  p3_operador:    'assets/resultado/p3-operador.jpg',
-  p3_executor:    'assets/resultado/p3-executor.jpg',
-  p3_comunicador: 'assets/resultado/p3-comunicador.jpg',
-  p3_lider:       'assets/resultado/p3-lider.jpg',
-  p4_operador:    'assets/resultado/p4-operador.jpg',
-  p4_executor:    'assets/resultado/p4-executor.jpg',
-  p4_comunicador: 'assets/resultado/p4-comunicador.jpg',
-  p4_lider:       'assets/resultado/p4-lider.jpg',
-  p5:             'assets/resultado/p5.jpg',
+  p1:             'assets/resultado/p1.png',
+  p2:             'assets/resultado/p2.png',
+  p3_operador:    'assets/resultado/p3-operador.png',
+  p3_executor:    'assets/resultado/p3-executor.png',
+  p3_comunicador: 'assets/resultado/p3-comunicador.png',
+  p3_lider:       'assets/resultado/p3-lider.png',
+  p4_operador:    'assets/resultado/p4-operador.png',
+  p4_executor:    'assets/resultado/p4-executor.png',
+  p4_comunicador: 'assets/resultado/p4-comunicador.png',
+  p4_lider:       'assets/resultado/p4-lider.png',
+  p5:             'assets/resultado/p5.png',
 };
 
 function rpImgTag(src, alt) {
