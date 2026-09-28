@@ -350,3 +350,46 @@ function renderizarResultado(scores) {
 }
 
 // Exportação via botões dentro da página 5 (ligados em resultado.js → renderP5)
+
+// ─── Preview de desenvolvimento (?preview=operador|executor|comunicador|lider) ──
+
+(function () {
+  const p = new URLSearchParams(window.location.search).get('preview');
+
+  const mocks = {
+    operador:    { autodominio: 55, direcao: 45, influencia: 50, maestria: 48, eixoX: 45, eixoY: 49, perfil: 'operador' },
+    executor:    { autodominio: 65, direcao: 78, influencia: 50, maestria: 55, eixoX: 78, eixoY: 52, perfil: 'executor' },
+    comunicador: { autodominio: 60, direcao: 45, influencia: 75, maestria: 72, eixoX: 45, eixoY: 73, perfil: 'comunicador' },
+    lider:       { autodominio: 75, direcao: 80, influencia: 78, maestria: 72, eixoX: 80, eixoY: 75, perfil: 'lider'      },
+  };
+
+  if (!p || !mocks[p]) return;
+
+  userData  = { nome: 'Preview Dev' };
+  scoreData = mocks[p];
+  renderizarResultado(scoreData);
+  mostrarTela('tela-resultado');
+
+  // Barra flutuante para trocar perfil rapidamente
+  const bar = document.createElement('div');
+  bar.style.cssText = 'position:fixed;bottom:80px;right:16px;z-index:9999;background:#1A1A1A;border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;gap:5px;box-shadow:0 4px 20px rgba(0,0,0,.45)';
+
+  const lbl = document.createElement('span');
+  lbl.textContent = '⚙ Preview';
+  lbl.style.cssText = 'color:#666;font-size:10px;text-transform:uppercase;letter-spacing:.06em;padding:0 2px';
+  bar.appendChild(lbl);
+
+  Object.keys(mocks).forEach((key) => {
+    const btn = document.createElement('button');
+    btn.textContent = key.charAt(0).toUpperCase() + key.slice(1);
+    btn.style.cssText = `background:${key === p ? '#C8961A' : '#333'};color:#fff;border:none;border-radius:6px;padding:5px 12px;cursor:pointer;font-size:11px;font-weight:700;text-align:left`;
+    btn.onclick = () => {
+      const u = new URL(location.href);
+      u.searchParams.set('preview', key);
+      location.href = u.toString();
+    };
+    bar.appendChild(btn);
+  });
+
+  document.body.appendChild(bar);
+}());
