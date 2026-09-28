@@ -790,8 +790,15 @@ textarea { resize: vertical; }
 /* ── Mapa HEDRA (página 2) ──────────────────────────────────────────────────── */
 .rp-mapa-wrap {
   position: relative;
-  height: 240px;
   margin-bottom: 20px;
+}
+
+.hedra-mapa {
+  width: 100%;
+  max-width: 420px;
+  height: auto;
+  display: block;
+  margin: 0 auto;
 }
 
 .rp-mapa-wrap canvas {
@@ -1059,7 +1066,6 @@ textarea { resize: vertical; }
 @media (min-width: 520px) {
   .rp-img-wrap { height: 260px; }
   .rp-content  { padding: 24px 24px 40px; }
-  .rp-mapa-wrap { height: 280px; }
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -1181,7 +1187,7 @@ textarea { resize: vertical; }
     gap: 10px;
   }
 
-  .rp-mapa-wrap { height: 320px; }
+  .hedra-mapa { max-width: 500px; }
 
   /* ── Página 5: botões de download em linha ───────────────────────────── */
   .rp-btns-download {

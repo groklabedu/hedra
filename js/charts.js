@@ -62,7 +62,7 @@ function renderarMapaHEDRA(canvasId, eixoX, eixoY, perfil) {
   ];
   const qw = CW / 2, qh = CH / 2;
 
-  const svgStr = `<svg class="hedra-mapa" viewBox="0 0 ${VW} ${VH}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block">
+  const svgStr = `<svg class="hedra-mapa" viewBox="0 0 ${VW} ${VH}" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <pattern id="hatch-${uid}" patternUnits="userSpaceOnUse" width="10" height="10" patternTransform="rotate(45)">
       <line x1="0" y1="0" x2="0" y2="10" stroke="#B8A88A" stroke-width="0.7" stroke-opacity="0.45"/>
