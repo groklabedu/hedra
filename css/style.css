@@ -114,6 +114,9 @@ input:focus, select:focus, textarea:focus {
 
 textarea { resize: vertical; }
 
+/* Garante que hidden funcione mesmo quando .btn define display */
+[hidden] { display: none !important; }
+
 /* ── Botões ─────────────────────────────────────────────────────────────── */
 .btn {
   display: inline-flex;
