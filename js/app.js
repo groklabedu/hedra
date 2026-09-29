@@ -14,6 +14,7 @@ let respostas = new Array(TOTAL_PERGUNTAS).fill(5);
 let respostaAberta = '';
 let secaoAtual = 1;
 let scoreData = null;
+let _pendingSlots = null; // { email, slots } quando o acesso é via slot liberado pelo admin
 
 // ─── Utilitários ────────────────────────────────────────────────────────────
 
@@ -63,22 +64,41 @@ document.getElementById('form-identificacao').addEventListener('submit', async (
   btnSubmit.disabled = true;
 
   try {
-    const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/respostas?email=eq.${encodeURIComponent(email)}&select=*&limit=1`,
+    // Verifica resultado anterior
+    const resRes = await fetch(
+      `${SUPABASE_URL}/rest/v1/respostas?email=eq.${encodeURIComponent(email)}&select=*&order=created_at.desc&limit=1`,
       { headers: SB_HEADERS }
     );
-    const rows = await res.json();
-    if (rows.length > 0) {
-      mostrarOpcoesDuplicado(email, rows[0]);
+    const rows = await resRes.json();
+    const temResultado = rows.length > 0;
+
+    if (temResultado) {
+      // Verifica se tem slot liberado pelo admin
+      const acRes = await fetch(
+        `${SUPABASE_URL}/rest/v1/acessos?email=eq.${encodeURIComponent(email)}&select=slots`,
+        { headers: SB_HEADERS }
+      );
+      const acRows = await acRes.json();
+      const slots = acRows.length > 0 ? acRows[0].slots : 0;
+
+      if (slots < 1) {
+        mostrarBloqueado(email, rows[0]);
+        return;
+      }
+      // Tem slot liberado — registra para consumir após o teste
+      _pendingSlots = { email, slots };
+      iniciarTeste(email, false);
       return;
     }
+
+    // Primeiro acesso — limpar localStorage legado se existir
     if (jaFez.includes(email)) {
-      const atualizado = jaFez.filter((e) => e !== email);
-      localStorage.setItem('hedra_participantes', JSON.stringify(atualizado));
+      localStorage.setItem('hedra_participantes',
+        JSON.stringify(jaFez.filter((e) => e !== email)));
     }
   } catch (_) {
     if (jaFez.includes(email)) {
-      mostrarOpcoesDuplicado(email, null);
+      mostrarBloqueado(email, null);
       return;
     }
   } finally {
@@ -98,12 +118,20 @@ document.getElementById('form-identificacao').addEventListener('submit', async (
   });
 });
 
-function mostrarOpcoesDuplicado(email, dadosAnteriores) {
+function mostrarBloqueado(email, dadosAnteriores) {
   document.getElementById('msg-duplicado').classList.remove('oculto');
   document.getElementById('opcoes-duplicado').classList.remove('oculto');
 
+  // Mensagem atualizada
+  const msgEl = document.getElementById('msg-duplicado');
+  msgEl.textContent = 'Você já realizou este inventário. Para fazer uma nova avaliação, solicite a liberação ao responsável.';
+
   document.getElementById('btn-ver-resultado').onclick = () => {
     if (dadosAnteriores) {
+      userData = { nome: dadosAnteriores.nome, email, empresa: dadosAnteriores.empresa,
+                   cargo: dadosAnteriores.cargo, area: dadosAnteriores.area,
+                   estado: dadosAnteriores.estado, cidade: dadosAnteriores.cidade,
+                   fone: dadosAnteriores.fone || '' };
       scoreData = {
         autodominio: Number(dadosAnteriores.autodominio),
         direcao:     Number(dadosAnteriores.direcao),
@@ -116,15 +144,12 @@ function mostrarOpcoesDuplicado(email, dadosAnteriores) {
       renderizarResultado(scoreData);
       mostrarTela('tela-resultado');
     } else {
-      alert('Não foi possível recuperar o resultado anterior. Tente refazer o teste.');
+      alert('Não foi possível recuperar o resultado anterior.');
     }
   };
 
-  document.getElementById('btn-refazer').onclick = () => {
-    document.getElementById('msg-duplicado').classList.add('oculto');
-    document.getElementById('opcoes-duplicado').classList.add('oculto');
-    iniciarTeste(email, true);
-  };
+  // Esconder botão "Refazer" — substituído pelo sistema de slots
+  document.getElementById('btn-refazer').style.display = 'none';
 }
 
 function iniciarTeste(email, override) {
@@ -317,13 +342,6 @@ async function enviarDados() {
   };
 
   try {
-    if (userData.override) {
-      await fetch(
-        `${SUPABASE_URL}/rest/v1/respostas?email=eq.${encodeURIComponent(userData.email)}`,
-        { method: 'DELETE', headers: SB_HEADERS }
-      );
-    }
-
     const res = await fetch(`${SUPABASE_URL}/rest/v1/respostas`, {
       method: 'POST',
       headers: { ...SB_HEADERS, 'Prefer': 'return=minimal' },
@@ -335,6 +353,19 @@ async function enviarDados() {
       if (!jaFez.includes(userData.email)) {
         jaFez.push(userData.email);
         localStorage.setItem('hedra_participantes', JSON.stringify(jaFez));
+      }
+
+      // Consumir slot se o acesso foi liberado pelo admin
+      if (_pendingSlots && _pendingSlots.email === userData.email) {
+        await fetch(
+          `${SUPABASE_URL}/rest/v1/acessos?email=eq.${encodeURIComponent(userData.email)}`,
+          {
+            method: 'PATCH',
+            headers: { ...SB_HEADERS, 'Prefer': 'return=minimal' },
+            body: JSON.stringify({ slots: _pendingSlots.slots - 1 }),
+          }
+        );
+        _pendingSlots = null;
       }
     }
   } catch (err) {

@@ -173,6 +173,7 @@ function renderizarTabela(dados) {
       <td>${Number(d.eixoX).toFixed(0)} / ${Number(d.eixoY).toFixed(0)}</td>
       <td class="resposta-aberta" title="${(d.respostaAberta || '').replace(/"/g, '&quot;')}">${d.respostaAberta || '—'}</td>
       <td class="col-acoes">
+        <button class="btn-liberar" data-email="${d.email}" data-nome="${d.nome}" title="Liberar novo teste para este participante">+</button>
         <button class="btn-lixeira" data-id="${d.id}" title="Excluir este registro">🗑</button>
       </td>
     `;
@@ -191,6 +192,11 @@ function renderizarTabela(dados) {
       const nome = dadosAdmin.find((d) => d.id === id)?.nome || id;
       confirmarExclusao([id], `Excluir o registro de "${nome}"?`);
     });
+  });
+
+  // Listeners dos botões de liberar
+  tbody.querySelectorAll('.btn-liberar').forEach((btn) => {
+    btn.addEventListener('click', () => liberarTeste(btn.dataset.email, btn.dataset.nome));
   });
 }
 
@@ -309,6 +315,42 @@ document.getElementById('btn-exportar-csv').addEventListener('click', () => {
   link.download = 'hedra-dados.csv';
   link.click();
 });
+
+// ─── Liberar novo teste ──────────────────────────────────────────────────────
+
+async function liberarTeste(email, nome) {
+  if (!confirm(`Liberar um novo teste para "${nome}" (${email})?`)) return;
+
+  const status = document.getElementById('status-carregando');
+  status.textContent = 'Liberando acesso…';
+
+  try {
+    // Busca slots atuais
+    const getRes = await fetch(
+      `${SUPABASE_URL}/rest/v1/acessos?email=eq.${encodeURIComponent(email)}&select=slots`,
+      { headers: SB_HEADERS }
+    );
+    const rows = await getRes.json();
+    const slotsAtuais = rows.length > 0 ? rows[0].slots : 0;
+
+    // UPSERT com slots + 1
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/acessos`, {
+      method: 'POST',
+      headers: { ...SB_HEADERS, 'Prefer': 'resolution=merge-duplicates,return=minimal' },
+      body: JSON.stringify({ email, slots: slotsAtuais + 1, liberado_em: new Date().toISOString() }),
+    });
+
+    if (res.ok || res.status === 204) {
+      status.textContent = `Acesso liberado para ${nome}.`;
+      setTimeout(() => { status.textContent = ''; }, 3000);
+    } else {
+      status.textContent = 'Erro ao liberar acesso.';
+    }
+  } catch (err) {
+    status.textContent = 'Erro de conexão ao liberar.';
+    console.error(err);
+  }
+}
 
 // ─── Atualizar dados ─────────────────────────────────────────────────────────
 

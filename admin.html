@@ -108,20 +108,22 @@
     }
     thead .col-check input[type="checkbox"] { accent-color: #fff; }
 
-    /* Botão de lixeira */
-    .col-acoes { width: 40px; text-align: center !important; }
-    .btn-lixeira {
+    /* Botões de ação */
+    .col-acoes { width: 72px; text-align: center !important; white-space: nowrap; }
+    .btn-lixeira, .btn-liberar {
       background: none;
       border: none;
       cursor: pointer;
       padding: 4px 6px;
       border-radius: 6px;
-      color: #bbb;
       font-size: 1rem;
       line-height: 1;
       transition: color 0.15s, background 0.15s;
     }
+    .btn-lixeira { color: #bbb; }
     .btn-lixeira:hover { color: #CC2200; background: #FFF0EE; }
+    .btn-liberar { color: #aaa; font-weight: 700; }
+    .btn-liberar:hover { color: #1A6B45; background: #E8F5EE; }
 
     /* Barra de ações em massa */
     #barra-selecao {
@@ -302,7 +304,7 @@
                 <th>Perfil</th>
                 <th>X / Y</th>
                 <th>Reflexão</th>
-                <th class="col-acoes"></th>
+                <th class="col-acoes">Ações</th>
               </tr>
             </thead>
             <tbody id="tabela-corpo">
@@ -317,6 +319,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
   <script src="js/charts.js"></script>
-  <script src="js/admin.js"></script>
+  <script src="js/admin.js?v=2"></script>
 </body>
 </html>
