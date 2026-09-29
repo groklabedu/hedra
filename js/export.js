@@ -342,13 +342,17 @@ async function gerarPDF(scores, ud) {
 
   const S5T = HH + 8;
   let cy5 = S5T;
+
+  const IL5_W = 80;
+  const TXT5_W = CW - IL5_W - 8;
+
   pdf.setFont('helvetica','bold'); pdf.setFontSize(16); pdf.setTextColor(22,22,22);
-  const t5 = pdf.splitTextToSize(pc.p4_titulo, CW*0.6);
+  const t5 = pdf.splitTextToSize(pc.p4_titulo, TXT5_W * 0.85);
   pdf.text(t5, ML, cy5); cy5 += t5.length*lh(16)+8;
 
   const STEP_COUNT = pc.p4_steps.length;
   const STEP_GAP   = 2.5;
-  const STEP_W     = (CW - STEP_GAP*(STEP_COUNT-1)) / STEP_COUNT;
+  const STEP_W     = (TXT5_W - STEP_GAP*(STEP_COUNT-1)) / STEP_COUNT;
   const STEP_NUM_H = 10;
   const STEP_BODY_H= 24;
 
@@ -368,8 +372,8 @@ async function gerarPDF(scores, ud) {
   pdf.setFont('helvetica','bold'); pdf.setFontSize(8.5); pdf.setTextColor(...COR);
   pdf.text('PERGUNTAS PARA REFLEXÃO', ML, cy5); cy5 += 7;
 
-  const QPW = (CW-8)/2;
-  const QPH = (PH-cy5-14) / Math.ceil(pc.p4_perguntas.length/2);
+  const QPW = (TXT5_W - 8) / 2;
+  const QPH = 25; // altura fixa por linha — evita distribuição desproporcional
   pc.p4_perguntas.forEach((q,i) => {
     const qcol = i%2, qrow = Math.floor(i/2);
     const qx = ML+qcol*(QPW+8), qy = cy5+qrow*QPH;
@@ -379,6 +383,9 @@ async function gerarPDF(scores, ud) {
     pdf.text(pdf.splitTextToSize(q, QPW-8), qx+7, qy);
   });
 
+  // Ilustração à direita (preenche o espaço vertical)
+  addImgFit(imgFinal, ML + TXT5_W + 8, S5T, IL5_W, PH - S5T - 12);
+
   rodape();
 
   // ─── SLIDE 6: CONSIDERAÇÕES FINAIS ─────────────────────────────────────────
@@ -386,18 +393,14 @@ async function gerarPDF(scores, ud) {
   header('CONSIDERAÇÕES FINAIS');
 
   const S6T  = HH + 7;
-  // Ilustração à esquerda
-  const IL6_W = 70;
-  const IL6_X = ML;
-  const IL6_H = PH - S6T - 12;
-
-  // Texto de encerramento: à direita da ilustração
-  const TX6_X = IL6_X + IL6_W + 8;
-  const TX6_W = (CW*0.42) - IL6_W - 8; // ajuste para ficar próxima de 42% do CW
-  // Na verdade: dividir em 3 faixas: ilustração | texto | carta
-  // Larguras: 70 | 90 | CW-70-90-16 = 97
+  // 3 colunas: ilustração | texto | carta
+  const IL6_W   = 52;
+  const TX6_W   = 90;
+  const IL6_X   = ML;
+  const TX6_X   = IL6_X + IL6_W + 8;
   const CARTA_X = TX6_X + TX6_W + 8;
-  const CARTA_W = CW - IL6_W - TX6_W - 16;
+  const CARTA_W = CW - IL6_W - TX6_W - 16;  // 253 - 52 - 90 - 16 = 95mm
+  const IL6_H   = PH - S6T - 12;
 
   if (imgFinal) addImgFit(imgFinal, IL6_X, S6T, IL6_W, IL6_H);
 

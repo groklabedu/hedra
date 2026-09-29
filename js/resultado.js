@@ -295,8 +295,8 @@ function rpAtualizarNav() {
   const dots       = document.querySelectorAll('.rp-dot');
 
   num.textContent = `${rpPaginaAtual} / ${RP_TOTAL}`;
-  btnVoltar.style.display = rpPaginaAtual > 1 ? '' : 'none';
-  btnAvancar.style.display = rpPaginaAtual < RP_TOTAL ? '' : 'none';
+  btnVoltar.hidden  = rpPaginaAtual <= 1;
+  btnAvancar.hidden = rpPaginaAtual >= RP_TOTAL;
 
   dots.forEach((d, i) => {
     d.classList.toggle('ativo', i + 1 === rpPaginaAtual);
