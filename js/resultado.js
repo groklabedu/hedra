@@ -88,23 +88,7 @@ function renderP1() {
 
 function renderP2(scores) {
   const perfil = scores.perfil;
-  const ordemQuadrantes = ['comunicador', 'lider', 'operador', 'executor'];
-
-  const cards = ordemQuadrantes.map((key) => {
-    const info = PERFIS[key];
-    const ativo = key === perfil;
-    return `
-      <div class="rp-perfil-card ${ativo ? 'ativo' : ''}" style="
-        border-color:${info.cor}${ativo ? '' : '30'};
-        background:${info.cor}${ativo ? '12' : '06'};
-        ${ativo ? `box-shadow:0 0 0 2px ${info.cor}` : ''}
-      ">
-        ${ativo ? `<span class="rp-perfil-card-badge" style="background:${info.cor}">Seu resultado</span>` : ''}
-        <p class="rp-perfil-card-nome" style="color:${info.cor}">${info.nome}</p>
-        <p class="rp-perfil-card-resumo">${RC.p2_resumos[key]}</p>
-      </div>
-    `;
-  }).join('');
+  const info = PERFIS[perfil];
 
   document.getElementById('rp-page-2').innerHTML = `
     ${rpImgTag(RP_IMGS.p2, 'Mapa dos perfis de liderança')}
@@ -118,8 +102,15 @@ function renderP2(scores) {
         <canvas id="rp-canvas-mapa"></canvas>
       </div>
 
-      <div class="rp-perfis-grid">
-        ${cards}
+      <div class="rp-perfil-card ativo" style="
+        border-color:${info.cor};
+        background:${info.cor}12;
+        box-shadow:0 0 0 2px ${info.cor};
+        margin-top:16px
+      ">
+        <span class="rp-perfil-card-badge" style="background:${info.cor}">Seu resultado</span>
+        <p class="rp-perfil-card-nome" style="color:${info.cor}">${info.nome}</p>
+        <p class="rp-perfil-card-resumo">${RC.p2_resumos[perfil]}</p>
       </div>
     </div>
   `;
