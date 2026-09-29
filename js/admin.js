@@ -10,6 +10,8 @@ const ADMIN_KEY = 'HEDRA@admin2026';
 let dadosAdmin = [];
 let slotsAdmin = {}; // { email: slots }
 let chartPizzaAdmin = null;
+let sortCol = 'data';
+let sortDir = 'desc'; // 'asc' | 'desc'
 
 function formatarTempo(seg) {
   if (seg == null || isNaN(seg)) return '—';
@@ -152,9 +154,32 @@ function renderizarPainel(filtro = 'todos') {
   renderizarTabela(dados);
 }
 
+function ordenarDados(dados) {
+  return [...dados].sort((a, b) => {
+    let va, vb;
+    if (sortCol === 'data')  { va = a.data  || ''; vb = b.data  || ''; }
+    if (sortCol === 'nome')  { va = (a.nome  || '').toLowerCase(); vb = (b.nome  || '').toLowerCase(); }
+    if (sortCol === 'email') { va = (a.email || '').toLowerCase(); vb = (b.email || '').toLowerCase(); }
+    if (va < vb) return sortDir === 'asc' ? -1 : 1;
+    if (va > vb) return sortDir === 'asc' ?  1 : -1;
+    return 0;
+  });
+}
+
+function atualizarIconesOrdenacao() {
+  ['data', 'nome', 'email'].forEach((col) => {
+    const th = document.querySelector(`th[data-sort="${col}"]`);
+    if (!th) return;
+    const ico = th.querySelector('.sort-ico');
+    if (!ico) return;
+    ico.textContent = sortCol === col ? (sortDir === 'asc' ? ' ▲' : ' ▼') : ' ↕';
+  });
+}
+
 function renderizarTabela(dados) {
   const tbody = document.getElementById('tabela-corpo');
   tbody.innerHTML = '';
+  dados = ordenarDados(dados);
 
   // Resetar checkbox "selecionar todos"
   const checkTodos = document.getElementById('check-todos');
@@ -378,6 +403,23 @@ async function liberarTeste(email, nome) {
     console.error(err);
   }
 }
+
+// ─── Ordenação ───────────────────────────────────────────────────────────────
+
+document.querySelectorAll('th[data-sort]').forEach((th) => {
+  th.style.cursor = 'pointer';
+  th.addEventListener('click', () => {
+    const col = th.dataset.sort;
+    if (sortCol === col) {
+      sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+    } else {
+      sortCol = col;
+      sortDir = col === 'data' ? 'desc' : 'asc';
+    }
+    atualizarIconesOrdenacao();
+    aplicarFiltros();
+  });
+});
 
 // ─── Atualizar dados ─────────────────────────────────────────────────────────
 
