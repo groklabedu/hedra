@@ -15,6 +15,7 @@ let respostaAberta = '';
 let secaoAtual = 1;
 let scoreData = null;
 let _pendingSlots = null; // { email, slots } quando o acesso é via slot liberado pelo admin
+let _testeInicio = null;  // timestamp (ms) de quando o teste foi iniciado
 
 // ─── Utilitários ────────────────────────────────────────────────────────────
 
@@ -167,6 +168,7 @@ function iniciarTeste(email, override) {
 
   secaoAtual = 1;
   respostas = new Array(TOTAL_PERGUNTAS).fill(5);
+  _testeInicio = Date.now();
   renderizarSecao(1);
   mostrarTela('tela-teste');
 }
@@ -339,6 +341,7 @@ async function enviarDados() {
     perfil:          scoreData.perfil,
     perfil_nome:     PERFIS[scoreData.perfil].nome,
     resposta_aberta: respostaAberta,
+    tempo_segundos:  _testeInicio ? Math.round((Date.now() - _testeInicio) / 1000) : null,
   };
 
   try {

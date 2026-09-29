@@ -11,6 +11,13 @@ let dadosAdmin = [];
 let slotsAdmin = {}; // { email: slots }
 let chartPizzaAdmin = null;
 
+function formatarTempo(seg) {
+  if (seg == null || isNaN(seg)) return '—';
+  const m = Math.floor(seg / 60);
+  const s = seg % 60;
+  return m > 0 ? `${m}m ${String(s).padStart(2,'0')}s` : `${s}s`;
+}
+
 // ─── Login ───────────────────────────────────────────────────────────────────
 
 document.getElementById('btn-login').addEventListener('click', () => {
@@ -74,6 +81,7 @@ async function carregarDados() {
         perfilNome: p.nome,
         perfilCor:  p.cor,
         respostaAberta: row.resposta_aberta,
+        tempoSegundos:  row.tempo_segundos ?? null,
       };
     });
 
@@ -153,7 +161,7 @@ function renderizarTabela(dados) {
   if (checkTodos) checkTodos.checked = false;
 
   if (dados.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;padding:1rem;">Nenhum registro encontrado.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="12" style="text-align:center;padding:1rem;">Nenhum registro encontrado.</td></tr>';
     return;
   }
 
@@ -182,6 +190,7 @@ function renderizarTabela(dados) {
       </td>
       <td>${Number(d.eixoX).toFixed(0)} / ${Number(d.eixoY).toFixed(0)}</td>
       <td class="resposta-aberta" title="${(d.respostaAberta || '').replace(/"/g, '&quot;')}">${d.respostaAberta || '—'}</td>
+      <td class="col-tempo">${formatarTempo(d.tempoSegundos)}</td>
       <td class="col-slots">${slotsBadge}</td>
       <td class="col-acoes">
         <button class="btn-liberar" data-email="${d.email}" data-nome="${d.nome}" title="Liberar novo teste para este participante">+</button>
