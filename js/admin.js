@@ -8,6 +8,7 @@ const SB_HEADERS = {
 const ADMIN_KEY = 'HEDRA@admin2026';
 
 let dadosAdmin = [];
+let slotsAdmin = {}; // { email: slots }
 let chartPizzaAdmin = null;
 
 // ─── Login ───────────────────────────────────────────────────────────────────
@@ -34,15 +35,19 @@ async function carregarDados() {
   status.textContent = 'Carregando dados…';
 
   try {
-    const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/respostas?select=*&order=created_at.desc`,
-      { headers: SB_HEADERS }
-    );
+    const [res, acRes] = await Promise.all([
+      fetch(`${SUPABASE_URL}/rest/v1/respostas?select=*&order=created_at.desc`, { headers: SB_HEADERS }),
+      fetch(`${SUPABASE_URL}/rest/v1/acessos?select=email,slots`, { headers: SB_HEADERS }),
+    ]);
 
     if (!res.ok) {
       status.textContent = 'Erro ao carregar dados.';
       return;
     }
+
+    const acRows = acRes.ok ? await acRes.json() : [];
+    slotsAdmin = {};
+    acRows.forEach((r) => { slotsAdmin[r.email] = r.slots; });
 
     const rows = await res.json();
     status.textContent = '';
@@ -148,14 +153,19 @@ function renderizarTabela(dados) {
   if (checkTodos) checkTodos.checked = false;
 
   if (dados.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:1rem;">Nenhum registro encontrado.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;padding:1rem;">Nenhum registro encontrado.</td></tr>';
     return;
   }
 
   dados.forEach((d) => {
     const dataStr = d.data ? new Date(d.data).toLocaleDateString('pt-BR') : '—';
+    const slots = slotsAdmin[d.email] || 0;
+    const slotsBadge = slots > 0
+      ? `<span class="badge-slots badge-slots-ativo" title="${slots} teste(s) liberado(s)">${slots}</span>`
+      : `<span class="badge-slots" title="Nenhum teste liberado">—</span>`;
     const tr = document.createElement('tr');
     tr.dataset.id = d.id;
+    tr.dataset.email = d.email;
     tr.innerHTML = `
       <td class="col-check">
         <input type="checkbox" class="check-linha" data-id="${d.id}" title="Selecionar">
@@ -172,6 +182,7 @@ function renderizarTabela(dados) {
       </td>
       <td>${Number(d.eixoX).toFixed(0)} / ${Number(d.eixoY).toFixed(0)}</td>
       <td class="resposta-aberta" title="${(d.respostaAberta || '').replace(/"/g, '&quot;')}">${d.respostaAberta || '—'}</td>
+      <td class="col-slots">${slotsBadge}</td>
       <td class="col-acoes">
         <button class="btn-liberar" data-email="${d.email}" data-nome="${d.nome}" title="Liberar novo teste para este participante">+</button>
         <button class="btn-lixeira" data-id="${d.id}" title="Excluir este registro">🗑</button>
@@ -343,6 +354,13 @@ async function liberarTeste(email, nome) {
     if (res.ok || res.status === 204) {
       status.textContent = `Acesso liberado para ${nome}.`;
       setTimeout(() => { status.textContent = ''; }, 3000);
+
+      // Atualiza o badge na linha sem recarregar tudo
+      const novosSlots = slotsAtuais + 1;
+      slotsAdmin[email] = novosSlots;
+      document.querySelectorAll(`tr[data-email="${CSS.escape(email)}"] .col-slots`).forEach((td) => {
+        td.innerHTML = `<span class="badge-slots badge-slots-ativo" title="${novosSlots} teste(s) liberado(s)">${novosSlots}</span>`;
+      });
     } else {
       status.textContent = 'Erro ao liberar acesso.';
     }

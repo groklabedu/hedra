@@ -108,6 +108,22 @@
     }
     thead .col-check input[type="checkbox"] { accent-color: #fff; }
 
+    /* Badge de slots */
+    .col-slots { width: 52px; text-align: center !important; }
+    .badge-slots {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: #aaa;
+    }
+    .badge-slots-ativo {
+      background: #E8F5EE;
+      color: #1A6B45;
+      border: 1px solid #1A6B4540;
+    }
+
     /* Botões de ação */
     .col-acoes { width: 72px; text-align: center !important; white-space: nowrap; }
     .btn-lixeira, .btn-liberar {
@@ -304,11 +320,12 @@
                 <th>Perfil</th>
                 <th>X / Y</th>
                 <th>Reflexão</th>
+                <th class="col-slots">Slots</th>
                 <th class="col-acoes">Ações</th>
               </tr>
             </thead>
             <tbody id="tabela-corpo">
-              <tr><td colspan="10" style="text-align:center;padding:20px;color:#aaa">Aguardando dados…</td></tr>
+              <tr><td colspan="11" style="text-align:center;padding:20px;color:#aaa">Aguardando dados…</td></tr>
             </tbody>
           </table>
         </div>
