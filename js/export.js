@@ -212,42 +212,26 @@ async function gerarPDF(scores, ud) {
     belowY += 7.5;
   });
 
-  // 4 Cards dos quadrantes (2×2) na coluna direita
-  const QDATA = [
-    {key:'comunicador', nome:'Comunicador Frágil',              cor:rgb('#B7770D'), col:0, row:0},
-    {key:'lider',       nome:'Líder de Influência Estratégica', cor:rgb('#1A6B45'), col:1, row:0},
-    {key:'operador',    nome:'Operador Sobrecarregado',         cor:rgb('#CC4400'), col:0, row:1},
-    {key:'executor',    nome:'Executor Eficiente',               cor:rgb('#1A5276'), col:1, row:1},
-  ];
-  const CARD_GAP = 3;
-  const CARD_W   = (CW2 - CARD_GAP) / 2;
-  const CARD_H   = (PH - S2T - 14 - CARD_GAP) / 2;
+  // Card único do perfil do participante
+  const CARD_W = CW2;
+  const CARD_H = PH - S2T - 14;
+  pdf.setFillColor(...tint(0.09));
+  pdf.setDrawColor(...COR); pdf.setLineWidth(1.2);
+  pdf.roundedRect(CX, S2T, CARD_W, CARD_H, 3, 3, 'FD');
 
-  QDATA.forEach(({key, nome: qn, cor: qc, col, row}) => {
-    const cx = CX + col*(CARD_W+CARD_GAP);
-    const cy = S2T + row*(CARD_H+CARD_GAP);
-    const ativo = key === p;
-    const [r,g,b] = qc;
-    const bgAlpha = ativo ? 0.12 : 0.05;
-    pdf.setFillColor(r+((255-r)*(1-bgAlpha))|0, g+((255-g)*(1-bgAlpha))|0, b+((255-b)*(1-bgAlpha))|0);
-    pdf.setDrawColor(...qc); pdf.setLineWidth(ativo?1.0:0.22);
-    pdf.roundedRect(cx, cy, CARD_W, CARD_H, 3, 3, 'FD');
+  let tY2 = S2T + 8;
+  pdf.setFillColor(...COR); pdf.roundedRect(CX+6, tY2, CARD_W-12, 8, 1.5, 1.5, 'F');
+  pdf.setFont('helvetica','bold'); pdf.setFontSize(8); pdf.setTextColor(255,255,255);
+  pdf.text('SEU RESULTADO', CX+CARD_W/2, tY2+5.5, {align:'center'});
+  tY2 += 15;
 
-    let tY = cy+6;
-    if (ativo) {
-      pdf.setFillColor(...qc); pdf.roundedRect(cx+3, tY, CARD_W-6, 6, 1, 1, 'F');
-      pdf.setFont('helvetica','bold'); pdf.setFontSize(6.5); pdf.setTextColor(255,255,255);
-      pdf.text('SEU RESULTADO', cx+CARD_W/2, tY+4.3, {align:'center'});
-      tY += 9;
-    }
-    pdf.setFont('helvetica','bold'); pdf.setFontSize(ativo?9.5:8.5); pdf.setTextColor(...qc);
-    const nls = pdf.splitTextToSize(qn, CARD_W-7);
-    pdf.text(nls, cx+3.5, tY); tY += nls.length*lh(ativo?9.5:8.5)+2.5;
-    pdf.setFont('helvetica','normal'); pdf.setFontSize(7.5); pdf.setTextColor(44,42,38);
-    const rls = pdf.splitTextToSize(RC.p2_resumos[key], CARD_W-7);
-    const maxL = Math.floor((cy+CARD_H-tY-4)/lh(7.5));
-    pdf.text(rls.slice(0,maxL), cx+3.5, tY);
-  });
+  pdf.setFont('helvetica','bold'); pdf.setFontSize(17); pdf.setTextColor(...COR);
+  const nls2 = pdf.splitTextToSize(pf.nome, CARD_W-14);
+  pdf.text(nls2, CX+7, tY2); tY2 += nls2.length*lh(17)+8;
+
+  pdf.setFont('helvetica','normal'); pdf.setFontSize(10.5); pdf.setTextColor(44,42,38);
+  const rls2 = pdf.splitTextToSize(RC.p2_resumos[p], CARD_W-14);
+  pdf.text(rls2, CX+7, tY2);
 
   rodape();
 
@@ -256,8 +240,8 @@ async function gerarPDF(scores, ud) {
   header('LEITURA APROFUNDADA DO CAMPO');
 
   const S3T   = HH + 6;
-  const IMG_W = 82; // coluna da ilustração
-  const TXT_W = CW - IMG_W - 8; // coluna de texto ~163mm
+  const IMG_W = 95; // coluna da ilustração
+  const TXT_W = CW - IMG_W - 8; // coluna de texto ~150mm
 
   // Intro breve
   pdf.setFont('helvetica','italic'); pdf.setFontSize(9); pdf.setTextColor(88,83,76);
@@ -372,15 +356,12 @@ async function gerarPDF(scores, ud) {
   pdf.setFont('helvetica','bold'); pdf.setFontSize(8.5); pdf.setTextColor(...COR);
   pdf.text('PERGUNTAS PARA REFLEXÃO', ML, cy5); cy5 += 7;
 
-  const QPW = (TXT5_W - 8) / 2;
-  const QPH = 25; // altura fixa por linha — evita distribuição desproporcional
-  pc.p4_perguntas.forEach((q,i) => {
-    const qcol = i%2, qrow = Math.floor(i/2);
-    const qx = ML+qcol*(QPW+8), qy = cy5+qrow*QPH;
+  pc.p4_perguntas.forEach((q, i) => {
+    const qy = cy5 + i * 22;
     pdf.setFont('helvetica','bold'); pdf.setFontSize(10); pdf.setTextColor(...COR);
-    pdf.text(String(i+1)+'.', qx, qy);
-    pdf.setFont('helvetica','normal'); pdf.setFontSize(9); pdf.setTextColor(44,42,38);
-    pdf.text(pdf.splitTextToSize(q, QPW-8), qx+7, qy);
+    pdf.text(String(i+1)+'.', ML, qy);
+    pdf.setFont('helvetica','normal'); pdf.setFontSize(9.5); pdf.setTextColor(44,42,38);
+    pdf.text(pdf.splitTextToSize(q, TXT5_W - 10), ML+7, qy);
   });
 
   // Ilustração à direita (preenche o espaço vertical)
