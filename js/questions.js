@@ -26,7 +26,7 @@ const PERGUNTAS = [
   { id: 14, parte: 2, texto: 'Quando algo me irrita durante o trabalho, consigo evitar que essa tensão contamine as conversas seguintes.' },
   { id: 15, parte: 2, texto: 'Dou feedbacks específicos sobre comportamento e impacto, e não apenas orientações genéricas sobre o que precisa melhorar.' },
   { id: 16, parte: 2, texto: 'Delego não apenas tarefas, mas também decisões, critérios e responsabilidade pelo resultado.' },
-  { id: 17, parte: 2, texto: 'Chego ao fim de semanas muito ocupadas com a sensação de ter trabalhado muito, mas avançado pouco no que era estratégico.', invertida: true },
+  { id: 17, parte: 2, texto: 'Chego ao fim de semana muito ocupado, com a sensação de ter trabalhado muito, mas avançado pouco no que era estratégico.', invertida: true },
   { id: 18, parte: 2, texto: 'Diante de uma situação tensa, consigo criar alguns segundos de pausa antes de responder.' },
   { id: 19, parte: 2, texto: 'Quando proponho uma mudança, explico direção, razão e impacto esperado de forma que as pessoas compreendam o movimento.' },
   { id: 20, parte: 2, texto: 'Minha equipe consegue resolver boa parte dos problemas cotidianos sem precisar me envolver diretamente.' },
