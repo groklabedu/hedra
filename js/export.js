@@ -27,7 +27,7 @@ async function gerarPDF(scores, ud) {
   function rodape(lb) {
     pdf.setFont('helvetica','normal'); pdf.setFontSize(7);
     pdf.setTextColor(185,180,172);
-    pdf.text(lb||'Inventário HEDRA — Asséssor Consultoria e Treinamento', ML, PH-5.5);
+    pdf.text(lb||'Matriz HEDRA — Asséssor Consultoria e Treinamento', ML, PH-5.5);
     pdf.text(String(_pg), PW-MR, PH-5.5, {align:'right'});
   }
   function novaPagina() { rodape(); pdf.addPage(); _pg++; }
@@ -48,7 +48,7 @@ async function gerarPDF(scores, ud) {
     {label:'Maestria',    val:scores.maestria,    c:rgb('#1A6B45')},
   ];
 
-  // ── Carrega imagem como data URL via canvas (mantém transparência) ────────
+  // ── Carrega imagem como data URL via canvas ───────────────────────────────
   async function loadImg(src) {
     return new Promise((res) => {
       const img = new Image();
@@ -56,6 +56,24 @@ async function gerarPDF(scores, ud) {
         const c = document.createElement('canvas');
         c.width = img.naturalWidth; c.height = img.naturalHeight;
         c.getContext('2d').drawImage(img, 0, 0);
+        res({ data: c.toDataURL('image/png'), w: img.naturalWidth, h: img.naturalHeight });
+      };
+      img.onerror = () => res(null);
+      img.src = src;
+    });
+  }
+
+  // Versão com fundo branco (para ilustrações com transparência)
+  async function loadImgWhite(src) {
+    return new Promise((res) => {
+      const img = new Image();
+      img.onload = () => {
+        const c = document.createElement('canvas');
+        c.width = img.naturalWidth; c.height = img.naturalHeight;
+        const ctx = c.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, c.width, c.height);
+        ctx.drawImage(img, 0, 0);
         res({ data: c.toDataURL('image/png'), w: img.naturalWidth, h: img.naturalHeight });
       };
       img.onerror = () => res(null);
@@ -77,10 +95,10 @@ async function gerarPDF(scores, ud) {
   // ── Captura assets de forma paralela ──────────────────────────────────────
   const p = scores.perfil;
   const [imgCapa, imgP3, imgP4, imgFinal, logoObj, mapaImgData] = await Promise.all([
-    loadImg('assets/resultado/p1.png'),
-    loadImg(`assets/resultado/p3-${p}.png`),
-    loadImg(`assets/resultado/p4-${p}.png`),
-    loadImg('assets/resultado/p5.png'),
+    loadImgWhite('assets/resultado/p1.png'),
+    loadImgWhite(`assets/resultado/p3-${p}.png`),
+    loadImgWhite(`assets/resultado/p4-${p}.png`),
+    loadImgWhite('assets/resultado/p5.png'),
     // Logo
     (async () => {
       try {
@@ -178,7 +196,7 @@ async function gerarPDF(scores, ud) {
   const ilH = PH - ilTop - 12;
   if (imgCapa && ilH > 20) addImgFit(imgCapa, RX, ilTop, RW, ilH);
 
-  rodape('Inventário HEDRA — Asséssor Consultoria e Treinamento');
+  rodape('Matriz HEDRA — Asséssor Consultoria e Treinamento');
 
   // ─── SLIDE 2: CAMPO DE LIDERANÇA ───────────────────────────────────────────
   novaPagina();
@@ -212,9 +230,14 @@ async function gerarPDF(scores, ud) {
     belowY += 7.5;
   });
 
-  // Card único do perfil do participante
+  // Card único do perfil — altura ajustada ao conteúdo
   const CARD_W = CW2;
-  const CARD_H = PH - S2T - 14;
+  pdf.setFont('helvetica','bold'); pdf.setFontSize(17);
+  const nls2 = pdf.splitTextToSize(pf.nome, CARD_W-14);
+  pdf.setFont('helvetica','normal'); pdf.setFontSize(10.5);
+  const rls2 = pdf.splitTextToSize(RC.p2_resumos[p], CARD_W-14);
+  const CARD_H = 8 + 8 + 7 + nls2.length*lh(17) + 8 + rls2.length*lh(10.5) + 10;
+
   pdf.setFillColor(...tint(0.09));
   pdf.setDrawColor(...COR); pdf.setLineWidth(1.2);
   pdf.roundedRect(CX, S2T, CARD_W, CARD_H, 3, 3, 'FD');
@@ -226,12 +249,15 @@ async function gerarPDF(scores, ud) {
   tY2 += 15;
 
   pdf.setFont('helvetica','bold'); pdf.setFontSize(17); pdf.setTextColor(...COR);
-  const nls2 = pdf.splitTextToSize(pf.nome, CARD_W-14);
   pdf.text(nls2, CX+7, tY2); tY2 += nls2.length*lh(17)+8;
 
   pdf.setFont('helvetica','normal'); pdf.setFontSize(10.5); pdf.setTextColor(44,42,38);
-  const rls2 = pdf.splitTextToSize(RC.p2_resumos[p], CARD_W-14);
   pdf.text(rls2, CX+7, tY2);
+
+  // Ilustração abaixo do card
+  const IMG2_Y = S2T + CARD_H + 4;
+  const IMG2_H = PH - IMG2_Y - 12;
+  if (IMG2_H > 15) addImgFit(imgP3, CX, IMG2_Y, CARD_W, IMG2_H);
 
   rodape();
 
@@ -254,7 +280,7 @@ async function gerarPDF(scores, ud) {
   let lcy3 = COLS_TOP;
   pdf.setFillColor(...COR); pdf.rect(ML, lcy3, COLW3, 9, 'F');
   pdf.setFont('helvetica','bold'); pdf.setFontSize(9); pdf.setTextColor(255,255,255);
-  pdf.text('FORÇAS', ML+5, lcy3+6.2); lcy3 += 12;
+  pdf.text('FORÇAS', ML+5, lcy3+6.2); lcy3 += 16;
   pc.forcas.forEach((f) => {
     const fl = pdf.splitTextToSize(f, COLW3-12);
     pdf.setFont('helvetica','bold'); pdf.setFontSize(9.5); pdf.setTextColor(...COR);
@@ -269,7 +295,7 @@ async function gerarPDF(scores, ud) {
   let rcy3 = COLS_TOP;
   pdf.setFillColor(...WARN); pdf.rect(RC3X, rcy3, COLW3, 9, 'F');
   pdf.setFont('helvetica','bold'); pdf.setFontSize(9); pdf.setTextColor(255,255,255);
-  pdf.text('PONTOS DE ATENÇÃO', RC3X+5, rcy3+6.2); rcy3 += 12;
+  pdf.text('PONTOS DE ATENÇÃO', RC3X+5, rcy3+6.2); rcy3 += 16;
   pc.pontos.forEach((pt) => {
     const pl = pdf.splitTextToSize(pt, COLW3-12);
     pdf.setFont('helvetica','bold'); pdf.setFontSize(9.5); pdf.setTextColor(...WARN);
@@ -290,19 +316,25 @@ async function gerarPDF(scores, ud) {
   header('LEITURA APROFUNDADA DO CAMPO');
 
   const S4T = HH + 8;
-  let cy4 = S4T;
+
+  // Pré-calcular alturas para centralizar verticalmente
+  const pressaoLines4 = pc.pressao.map((pt) => pdf.splitTextToSize(pt, TXT_W));
+  const pressaoH4 = pressaoLines4.reduce((acc, pl) => acc + pl.length*lh(9.5)+3, 0);
+  const mvls = pdf.splitTextToSize(pc.movimento, TXT_W-18);
+  const mvH = 8 + 8 + mvls.length*lh(13)+5 + lh(9.5) + 10; // callout auto-height
+  const totalH4 = 8 + pressaoH4 + 8 + mvH;
+  const availH4 = PH - S4T - 12;
+  let cy4 = S4T + Math.max(0, (availH4 - totalH4) / 2);
 
   pdf.setFont('helvetica','bold'); pdf.setFontSize(9); pdf.setTextColor(...COR);
   pdf.text('O QUE PODE ACONTECER SOB PRESSÃO', ML, cy4); cy4 += 8;
 
-  pc.pressao.forEach((pt) => {
-    const pl = pdf.splitTextToSize(pt, TXT_W);
+  pressaoLines4.forEach((pl) => {
     pdf.setFont('helvetica','normal'); pdf.setFontSize(9.5); pdf.setTextColor(48,45,42);
     pdf.text(pl, ML, cy4); cy4 += pl.length*lh(9.5)+3;
   });
 
-  cy4 += 5;
-  const mvH = PH - cy4 - 14;
+  cy4 += 8;
   pdf.setFillColor(...tint(0.07)); pdf.rect(ML, cy4, TXT_W, mvH, 'F');
   pdf.setFillColor(...COR); pdf.rect(ML, cy4, 4, mvH, 'F');
 
@@ -310,7 +342,6 @@ async function gerarPDF(scores, ud) {
   pdf.setFont('helvetica','bold'); pdf.setFontSize(8.5); pdf.setTextColor(...COR);
   pdf.text('MOVIMENTO DE MATURIDADE', ML+9, mvy); mvy += 8;
   pdf.setFont('helvetica','italic'); pdf.setFontSize(13); pdf.setTextColor(22,22,22);
-  const mvls = pdf.splitTextToSize(pc.movimento, TXT_W-18);
   pdf.text(mvls, ML+9, mvy); mvy += mvls.length*lh(13)+5;
   pdf.setFont('helvetica','bold'); pdf.setFontSize(9.5); pdf.setTextColor(...COR);
   pdf.text('Prioridade HEDRA: '+pc.prioridade, ML+9, mvy);
@@ -335,7 +366,7 @@ async function gerarPDF(scores, ud) {
   pdf.text(t5, ML, cy5); cy5 += t5.length*lh(16)+8;
 
   const STEP_COUNT = pc.p4_steps.length;
-  const STEP_GAP   = 2.5;
+  const STEP_GAP   = 8;
   const STEP_W     = (TXT5_W - STEP_GAP*(STEP_COUNT-1)) / STEP_COUNT;
   const STEP_NUM_H = 10;
   const STEP_BODY_H= 24;
@@ -350,18 +381,37 @@ async function gerarPDF(scores, ud) {
     const sls = pdf.splitTextToSize(s, STEP_W-4);
     const sty = cy5+STEP_NUM_H+(STEP_BODY_H-sls.length*lh(8.5))/2+lh(8.5)*0.85;
     pdf.text(sls, sx+STEP_W/2, sty, {align:'center'});
+
+    // Seta para o próximo step
+    if (i < STEP_COUNT - 1) {
+      const ax = sx + STEP_W + 1.5;
+      const ay = cy5 + STEP_NUM_H/2;
+      const ae = ax + STEP_GAP - 3;
+      pdf.setDrawColor(...COR); pdf.setLineWidth(0.6);
+      pdf.line(ax, ay, ae, ay);
+      pdf.line(ae - 2, ay - 1.5, ae, ay);
+      pdf.line(ae - 2, ay + 1.5, ae, ay);
+    }
   });
 
-  cy5 += STEP_NUM_H+STEP_BODY_H+12;
+  cy5 += STEP_NUM_H+STEP_BODY_H+10;
   pdf.setFont('helvetica','bold'); pdf.setFontSize(8.5); pdf.setTextColor(...COR);
   pdf.text('PERGUNTAS PARA REFLEXÃO', ML, cy5); cy5 += 7;
 
   pc.p4_perguntas.forEach((q, i) => {
-    const qy = cy5 + i * 22;
+    const qls = pdf.splitTextToSize(q, TXT5_W - 10);
+    const qy = cy5;
     pdf.setFont('helvetica','bold'); pdf.setFontSize(10); pdf.setTextColor(...COR);
     pdf.text(String(i+1)+'.', ML, qy);
     pdf.setFont('helvetica','normal'); pdf.setFontSize(9.5); pdf.setTextColor(44,42,38);
-    pdf.text(pdf.splitTextToSize(q, TXT5_W - 10), ML+7, qy);
+    pdf.text(qls, ML+7, qy);
+    cy5 += qls.length*lh(9.5) + 4;
+    // Linha separadora
+    if (i < pc.p4_perguntas.length - 1) {
+      pdf.setDrawColor(220,217,210); pdf.setLineWidth(0.2);
+      pdf.line(ML, cy5, ML+TXT5_W-10, cy5);
+      cy5 += 4;
+    }
   });
 
   // Ilustração à direita (preenche o espaço vertical)
@@ -374,17 +424,14 @@ async function gerarPDF(scores, ud) {
   header('CONSIDERAÇÕES FINAIS');
 
   const S6T  = HH + 7;
-  // 3 colunas: ilustração | texto | carta
-  const IL6_W   = 52;
-  const TX6_W   = 90;
-  const IL6_X   = ML;
-  const TX6_X   = IL6_X + IL6_W + 8;
-  const CARTA_X = TX6_X + TX6_W + 8;
-  const CARTA_W = CW - IL6_W - TX6_W - 16;  // 253 - 52 - 90 - 16 = 95mm
+  // 2 colunas: texto empilhado (esquerda) | ilustração (direita)
+  const IL6_W   = 85;
+  const TX6_W   = CW - IL6_W - 10;   // ~158mm
+  const TX6_X   = ML;
+  const IL6_X   = ML + TX6_W + 10;
   const IL6_H   = PH - S6T - 12;
 
-  if (imgFinal) addImgFit(imgFinal, IL6_X, S6T, IL6_W, IL6_H);
-
+  // Bloco 1: texto geral
   let lcy6 = S6T;
   pdf.setFont('helvetica','bold'); pdf.setFontSize(13); pdf.setTextColor(22,22,22);
   const cl1 = pdf.splitTextToSize('A Matriz HEDRA não define quem você é.', TX6_W);
@@ -400,26 +447,26 @@ async function gerarPDF(scores, ud) {
     pdf.text(tls, TX6_X, lcy6); lcy6 += tls.length*lh(8.5)+3.5;
   });
 
-  const fechY = PH - 24;
   pdf.setFont('helvetica','italic'); pdf.setFontSize(7.5); pdf.setTextColor(128,122,112);
-  pdf.text(pdf.splitTextToSize(
-    'Lembre-se: A liderança não é fixa, é evolutiva.',
-    TX6_W
-  ), TX6_X, fechY);
+  pdf.text(pdf.splitTextToSize('Lembre-se: A liderança não é fixa, é evolutiva.', TX6_W), TX6_X, lcy6);
+  lcy6 += lh(7.5) + 8;
 
-  // Carta pessoal
-  const ctaH = PH - S6T - 12;
-  pdf.setFillColor(...tint(0.07)); pdf.rect(CARTA_X, S6T, CARTA_W, ctaH, 'F');
-  pdf.setFillColor(...COR); pdf.rect(CARTA_X, S6T, CARTA_W, 3, 'F');
+  // Bloco 2: carta pessoal
+  const cartaH = PH - lcy6 - 12;
+  pdf.setFillColor(...tint(0.07)); pdf.rect(TX6_X, lcy6, TX6_W, cartaH, 'F');
+  pdf.setFillColor(...COR); pdf.rect(TX6_X, lcy6, TX6_W, 3, 'F');
 
-  let rcy6 = S6T+10;
+  let rcy6 = lcy6 + 10;
   pdf.setFont('helvetica','bold'); pdf.setFontSize(11); pdf.setTextColor(...COR);
-  pdf.text('Caro(a) '+fnome+',', CARTA_X+6, rcy6); rcy6 += lh(11)+4;
+  pdf.text('Caro(a) '+fnome+',', TX6_X+6, rcy6); rcy6 += lh(11)+4;
   pc.p5_texto.forEach((t) => {
-    const tls = pdf.splitTextToSize(t, CARTA_W-12);
+    const tls = pdf.splitTextToSize(t, TX6_W-12);
     pdf.setFont('helvetica','normal'); pdf.setFontSize(8); pdf.setTextColor(38,36,33);
-    pdf.text(tls, CARTA_X+6, rcy6); rcy6 += tls.length*lh(8)+2;
+    pdf.text(tls, TX6_X+6, rcy6); rcy6 += tls.length*lh(8)+2;
   });
+
+  // Ilustração à direita (altura total do slide)
+  if (imgFinal) addImgFit(imgFinal, IL6_X, S6T, IL6_W, IL6_H);
 
   rodape();
   pdf.save('relatorio-hedra.pdf');
