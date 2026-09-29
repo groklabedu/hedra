@@ -431,36 +431,48 @@ async function gerarPDF(scores, ud) {
   const IL6_X   = ML + TX6_W + 10;
   const IL6_H   = PH - S6T - 12;
 
-  // Bloco 1: texto geral
-  let lcy6 = S6T;
-  pdf.setFont('helvetica','bold'); pdf.setFontSize(13); pdf.setTextColor(22,22,22);
-  const cl1 = pdf.splitTextToSize('A Matriz HEDRA não define quem você é.', TX6_W);
-  pdf.text(cl1, TX6_X, lcy6); lcy6 += cl1.length*lh(13)+5;
-
-  [
+  // Pré-calcular alturas para centralizar verticalmente
+  const titLines6 = pdf.splitTextToSize('A Matriz HEDRA não define quem você é.', TX6_W);
+  const paras6 = [
     'Ela mostra de onde sua liderança está partindo hoje.',
     'O desenvolvimento acontece quando você reconhece seus padrões atuais e começa a fazer movimentos mais intencionais.',
     'Liderança madura não é fazer mais. É ampliar sua capacidade de gerar resultados através das pessoas.',
-  ].forEach((t) => {
-    const tls = pdf.splitTextToSize(t, TX6_W);
+  ];
+  const parasLines6 = paras6.map((t) => pdf.splitTextToSize(t, TX6_W));
+  const fechoLines6 = pdf.splitTextToSize('Lembre-se: A liderança não é fixa, é evolutiva.', TX6_W);
+  const cartaSaudLines6 = pdf.splitTextToSize('Caro(a) '+fnome+',', TX6_W-12);
+  const cartaTextoLines6 = pc.p5_texto.map((t) => pdf.splitTextToSize(t, TX6_W-12));
+
+  const block1H = titLines6.length*lh(13)+5
+    + parasLines6.reduce((a, ls) => a + ls.length*lh(8.5)+3.5, 0)
+    + fechoLines6.length*lh(7.5) + 8;
+  const cartaContentH = lh(11)+4 + cartaTextoLines6.reduce((a, ls) => a + ls.length*lh(8)+2, 0);
+  const cartaH = 10 + cartaContentH + 6;
+  const totalH6 = block1H + cartaH;
+  const availH6 = PH - S6T - 12;
+  let lcy6 = S6T + Math.max(0, (availH6 - totalH6) / 2);
+
+  // Bloco 1: texto geral
+  pdf.setFont('helvetica','bold'); pdf.setFontSize(13); pdf.setTextColor(22,22,22);
+  pdf.text(titLines6, TX6_X, lcy6); lcy6 += titLines6.length*lh(13)+5;
+
+  paras6.forEach((t, i) => {
     pdf.setFont('helvetica','normal'); pdf.setFontSize(8.5); pdf.setTextColor(54,52,48);
-    pdf.text(tls, TX6_X, lcy6); lcy6 += tls.length*lh(8.5)+3.5;
+    pdf.text(parasLines6[i], TX6_X, lcy6); lcy6 += parasLines6[i].length*lh(8.5)+3.5;
   });
 
   pdf.setFont('helvetica','italic'); pdf.setFontSize(7.5); pdf.setTextColor(128,122,112);
-  pdf.text(pdf.splitTextToSize('Lembre-se: A liderança não é fixa, é evolutiva.', TX6_W), TX6_X, lcy6);
-  lcy6 += lh(7.5) + 8;
+  pdf.text(fechoLines6, TX6_X, lcy6);
+  lcy6 += fechoLines6.length*lh(7.5) + 8;
 
-  // Bloco 2: carta pessoal
-  const cartaH = PH - lcy6 - 12;
+  // Bloco 2: carta pessoal (altura auto)
   pdf.setFillColor(...tint(0.07)); pdf.rect(TX6_X, lcy6, TX6_W, cartaH, 'F');
   pdf.setFillColor(...COR); pdf.rect(TX6_X, lcy6, TX6_W, 3, 'F');
 
   let rcy6 = lcy6 + 10;
   pdf.setFont('helvetica','bold'); pdf.setFontSize(11); pdf.setTextColor(...COR);
-  pdf.text('Caro(a) '+fnome+',', TX6_X+6, rcy6); rcy6 += lh(11)+4;
-  pc.p5_texto.forEach((t) => {
-    const tls = pdf.splitTextToSize(t, TX6_W-12);
+  pdf.text(cartaSaudLines6, TX6_X+6, rcy6); rcy6 += lh(11)+4;
+  cartaTextoLines6.forEach((tls) => {
     pdf.setFont('helvetica','normal'); pdf.setFontSize(8); pdf.setTextColor(38,36,33);
     pdf.text(tls, TX6_X+6, rcy6); rcy6 += tls.length*lh(8)+2;
   });
