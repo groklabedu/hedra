@@ -126,8 +126,8 @@
     }
 
     /* Botões de ação */
-    .col-acoes { width: 72px; text-align: center !important; white-space: nowrap; }
-    .btn-lixeira, .btn-liberar {
+    .col-acoes { width: 96px; text-align: center !important; white-space: nowrap; }
+    .btn-lixeira, .btn-liberar, .btn-pdf {
       background: none;
       border: none;
       cursor: pointer;
@@ -141,6 +141,9 @@
     .btn-lixeira:hover { color: #CC2200; background: #FFF0EE; }
     .btn-liberar { color: #aaa; font-weight: 700; }
     .btn-liberar:hover { color: #1A6B45; background: #E8F5EE; }
+    .btn-pdf { color: #aaa; font-size: 0.85rem; }
+    .btn-pdf:hover { color: #8B1A1A; background: #FDF0F0; }
+    .btn-pdf.gerando { opacity: 0.5; pointer-events: none; }
 
     /* Barra de ações em massa */
     #barra-selecao {
@@ -341,7 +344,11 @@
   </div><!-- /tela-painel -->
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="js/charts.js"></script>
-  <script src="js/admin.js?v=4"></script>
+  <script src="js/scoring.js?v=2"></script>
+  <script src="js/resultado-content.js?v=2"></script>
+  <script src="js/export.js?v=10"></script>
+  <script src="js/admin.js?v=5"></script>
 </body>
 </html>

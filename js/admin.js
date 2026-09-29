@@ -218,6 +218,7 @@ function renderizarTabela(dados) {
       <td class="col-tempo">${formatarTempo(d.tempoSegundos)}</td>
       <td class="col-slots">${slotsBadge}</td>
       <td class="col-acoes">
+        <button class="btn-pdf" data-id="${d.id}" title="Gerar PDF do resultado">PDF</button>
         <button class="btn-liberar" data-email="${d.email}" data-nome="${d.nome}" title="Liberar novo teste para este participante">+</button>
         <button class="btn-lixeira" data-id="${d.id}" title="Excluir este registro">🗑</button>
       </td>
@@ -228,6 +229,11 @@ function renderizarTabela(dados) {
   // Listeners das caixas de linha
   tbody.querySelectorAll('.check-linha').forEach((cb) => {
     cb.addEventListener('change', atualizarBarraSelecao);
+  });
+
+  // Listeners dos botões de PDF
+  tbody.querySelectorAll('.btn-pdf').forEach((btn) => {
+    btn.addEventListener('click', () => gerarPDFAdmin(btn.dataset.id, btn));
   });
 
   // Listeners dos botões de lixeira individuais
@@ -401,6 +407,40 @@ async function liberarTeste(email, nome) {
   } catch (err) {
     status.textContent = 'Erro de conexão ao liberar.';
     console.error(err);
+  }
+}
+
+// ─── Gerar PDF de um registro ────────────────────────────────────────────────
+
+async function gerarPDFAdmin(id, btn) {
+  const d = dadosAdmin.find((r) => r.id === id);
+  if (!d) return;
+
+  btn.classList.add('gerando');
+  btn.textContent = '…';
+
+  try {
+    const scores = {
+      perfil:      d.perfil,
+      autodominio: Number(d.autodominio),
+      direcao:     Number(d.direcao),
+      influencia:  Number(d.influencia),
+      maestria:    Number(d.maestria),
+      eixoX:       Number(d.eixoX),
+      eixoY:       Number(d.eixoY),
+    };
+    const ud = {
+      nome:    d.nome,
+      empresa: d.empresa || '',
+      cargo:   d.cargo   || '',
+    };
+    await gerarPDF(scores, ud);
+  } catch (err) {
+    console.error('Erro ao gerar PDF:', err);
+    alert('Erro ao gerar PDF. Verifique o console.');
+  } finally {
+    btn.classList.remove('gerando');
+    btn.textContent = 'PDF';
   }
 }
 
