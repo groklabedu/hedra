@@ -110,12 +110,27 @@ async function gerarPDF(scores, ud) {
         return { data: c.toDataURL('image/png'), w: el.naturalWidth, h: el.naturalHeight };
       } catch(e) { return null; }
     })(),
-    // SVG do mapa HEDRA
+    // SVG do mapa HEDRA (usa o existente no DOM ou gera temporariamente)
     (async () => {
       try {
-        const svgEl = document.querySelector('.rp-mapa-wrap svg.hedra-mapa')
-                   || document.querySelector('svg.hedra-mapa');
-        if (!svgEl) return null;
+        let svgEl = document.querySelector('.rp-mapa-wrap svg.hedra-mapa')
+                 || document.querySelector('svg.hedra-mapa');
+        let tmpDiv = null;
+
+        if (!svgEl && typeof renderarMapaHEDRA === 'function') {
+          const tmpId = '_hedra_pdf_tmp_' + Date.now();
+          tmpDiv = document.createElement('div');
+          tmpDiv.style.cssText = 'position:absolute;left:-9999px;top:-9999px;width:400px;height:360px;overflow:hidden';
+          const tmpCanvas = document.createElement('canvas');
+          tmpCanvas.id = tmpId;
+          tmpDiv.appendChild(tmpCanvas);
+          document.body.appendChild(tmpDiv);
+          renderarMapaHEDRA(tmpId, scores.eixoX, scores.eixoY, scores.perfil);
+          svgEl = tmpDiv.querySelector('svg.hedra-mapa');
+        }
+
+        if (!svgEl) { if (tmpDiv) document.body.removeChild(tmpDiv); return null; }
+
         const VW = 400, VH = 360, SCALE = 3;
         const svgStr = new XMLSerializer().serializeToString(svgEl);
         const canvas = document.createElement('canvas');
@@ -131,7 +146,9 @@ async function gerarPDF(scores, ud) {
           img.onerror = () => { URL.revokeObjectURL(url); rej(); };
           img.src = url;
         });
-        return canvas.toDataURL('image/png');
+        const dataUrl = canvas.toDataURL('image/png');
+        if (tmpDiv) document.body.removeChild(tmpDiv);
+        return dataUrl;
       } catch(e) { return null; }
     })(),
   ]);
