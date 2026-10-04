@@ -343,6 +343,17 @@ async function gerarPDF(scores, ud) {
   const availH4 = PH - S4T - 12;
   let cy4 = S4T + Math.max(0, (availH4 - totalH4) / 2);
 
+  // ── Clipping path: texto restrito à coluna (resolve métrica errada do jsPDF) ──
+  const _sc4 = 72 / 25.4; // pt por mm
+  const _pH4 = PH * _sc4;
+  const _cH4 = PH - S4T - 12;
+  const _cx4 = (ML * _sc4).toFixed(2);
+  const _cy4 = ((_pH4 - (S4T + _cH4) * _sc4)).toFixed(2);
+  const _cw4 = (TXT_W * _sc4).toFixed(2);
+  const _ch4 = (_cH4 * _sc4).toFixed(2);
+  pdf.internal.write('q');
+  pdf.internal.write(`${_cx4} ${_cy4} ${_cw4} ${_ch4} re W n`);
+
   pdf.setFont('helvetica','bold'); pdf.setFontSize(9); pdf.setTextColor(...COR);
   pdf.text('O QUE PODE ACONTECER SOB PRESSÃO', ML, cy4); cy4 += 8;
 
@@ -363,11 +374,10 @@ async function gerarPDF(scores, ud) {
   pdf.setFont('helvetica','bold'); pdf.setFontSize(9.5); pdf.setTextColor(...COR);
   pdf.text('Prioridade HEDRA: '+pc.prioridade, ML+9, mvy);
 
-  // Cobrir qualquer overflow de texto antes da ilustração
-  pdf.setFillColor(255, 255, 255);
-  pdf.rect(ML + TXT_W, S4T, IL3_X - (ML + TXT_W), PH - S4T - 12, 'F');
+  // Restaurar estado gráfico (remove clip) antes de desenhar ilustração
+  pdf.internal.write('Q');
 
-  // Ilustração p4 à direita
+  // Ilustração p4 à direita (fora do clip — não é afetada)
   addImgFit(imgP4, IL3_X, S4T, IMG_W, PH-S4T-12);
 
   rodape();
