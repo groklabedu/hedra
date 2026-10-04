@@ -96,8 +96,8 @@ async function gerarPDF(scores, ud) {
   const p = scores.perfil;
   const [imgCapa, imgP3, imgP4, imgFinal, logoObj, mapaImgData] = await Promise.all([
     loadImgWhite('assets/resultado/p1.png'),
-    loadImgWhite(`assets/resultado/p3-${p}.png`),
-    loadImgWhite(`assets/resultado/p4-${p}.png`),
+    loadImg(`assets/resultado/p3-${p}.png`),
+    loadImg(`assets/resultado/p4-${p}.png`),
     loadImgWhite('assets/resultado/p5.png'),
     // Logo
     (async () => {
