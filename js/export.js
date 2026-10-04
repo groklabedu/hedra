@@ -333,12 +333,13 @@ async function gerarPDF(scores, ud) {
   header('LEITURA APROFUNDADA DO CAMPO');
 
   const S4T = HH + 8;
+  const TXT4_W = CW; // largura total — sem ilustração lateral neste slide
 
   // Pré-calcular alturas para centralizar verticalmente
-  const pressaoLines4 = pc.pressao.map((pt) => pdf.splitTextToSize(pt, TXT_W));
+  const pressaoLines4 = pc.pressao.map((pt) => pdf.splitTextToSize(pt, TXT4_W));
   const pressaoH4 = pressaoLines4.reduce((acc, pl) => acc + pl.length*lh(9.5)+3, 0);
-  const mvls = pdf.splitTextToSize(pc.movimento, TXT_W-18);
-  const mvH = 8 + 8 + mvls.length*lh(13)+5 + lh(9.5) + 10; // callout auto-height
+  const mvls = pdf.splitTextToSize(pc.movimento, TXT4_W-18);
+  const mvH = 8 + 8 + mvls.length*lh(13)+5 + lh(9.5) + 10;
   const totalH4 = 8 + pressaoH4 + 8 + mvH;
   const availH4 = PH - S4T - 12;
   let cy4 = S4T + Math.max(0, (availH4 - totalH4) / 2);
@@ -352,7 +353,7 @@ async function gerarPDF(scores, ud) {
   });
 
   cy4 += 8;
-  pdf.setFillColor(...tint(0.07)); pdf.rect(ML, cy4, TXT_W, mvH, 'F');
+  pdf.setFillColor(...tint(0.07)); pdf.rect(ML, cy4, TXT4_W, mvH, 'F');
   pdf.setFillColor(...COR); pdf.rect(ML, cy4, 4, mvH, 'F');
 
   let mvy = cy4+8;
@@ -362,9 +363,6 @@ async function gerarPDF(scores, ud) {
   pdf.text(mvls, ML+9, mvy); mvy += mvls.length*lh(13)+5;
   pdf.setFont('helvetica','bold'); pdf.setFontSize(9.5); pdf.setTextColor(...COR);
   pdf.text('Prioridade HEDRA: '+pc.prioridade, ML+9, mvy);
-
-  // Ilustração p4 à direita
-  addImgFit(imgP4, IL3_X, S4T, IMG_W, PH-S4T-12);
 
   rodape();
 
@@ -498,7 +496,12 @@ async function gerarPDF(scores, ud) {
   if (imgFinal) addImgFit(imgFinal, IL6_X, S6T, IL6_W, IL6_H);
 
   rodape();
-  pdf.save('relatorio-hedra.pdf');
+  const nomeArquivo = nome
+    .toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+  pdf.save(`relatorio-matrizhedra-${nomeArquivo || 'participante'}.pdf`);
 }
 
 // Fallback caso o SVG não esteja disponível no DOM
