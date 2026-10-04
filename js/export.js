@@ -334,10 +334,10 @@ async function gerarPDF(scores, ud) {
 
   const S4T = HH + 8;
 
-  // jsPDF renderiza Helvetica ~14% mais largo para texto português
-  // — compensar reduzindo a largura de quebra proporcional
-  const WRAP4 = TXT_W * 0.86;
-  const WRAP4_MV = (TXT_W - 18) * 0.86;
+  // jsPDF renderiza Helvetica mais largo que o calculado (acentos portugueses).
+  // Fator compensatório: ~14% p/ 9.5pt normal, ~30% p/ 13pt itálico.
+  const WRAP4    = TXT_W * 0.86;        // parágrafos 9.5pt → renderiza ~133mm
+  const WRAP4_MV = TXT_W * 0.63;        // callout 13pt itálico → renderiza ~118mm
 
   // Pré-calcular alturas para centralizar verticalmente
   const pressaoLines4 = pc.pressao.map((pt) => pdf.splitTextToSize(pt, WRAP4));
