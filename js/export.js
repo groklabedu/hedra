@@ -363,6 +363,10 @@ async function gerarPDF(scores, ud) {
   pdf.setFont('helvetica','bold'); pdf.setFontSize(9.5); pdf.setTextColor(...COR);
   pdf.text('Prioridade HEDRA: '+pc.prioridade, ML+9, mvy);
 
+  // Cobrir qualquer overflow de texto antes da ilustração
+  pdf.setFillColor(255, 255, 255);
+  pdf.rect(ML + TXT_W, S4T, IL3_X - (ML + TXT_W), PH - S4T - 12, 'F');
+
   // Ilustração p4 à direita
   addImgFit(imgP4, IL3_X, S4T, IMG_W, PH-S4T-12);
 
