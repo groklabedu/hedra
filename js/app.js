@@ -342,6 +342,7 @@ async function enviarDados() {
     perfil_nome:     PERFIS[scoreData.perfil].nome,
     resposta_aberta: respostaAberta,
     tempo_segundos:  _testeInicio ? Math.round((Date.now() - _testeInicio) / 1000) : null,
+    respostas_q:     [...respostas],
   };
 
   try {

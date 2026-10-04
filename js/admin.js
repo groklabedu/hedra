@@ -84,6 +84,7 @@ async function carregarDados() {
         perfilCor:  p.cor,
         respostaAberta: row.resposta_aberta,
         tempoSegundos:  row.tempo_segundos ?? null,
+        respostasQ:     row.respostas_q ?? null,
       };
     });
 
@@ -219,6 +220,7 @@ function renderizarTabela(dados) {
       <td class="col-slots">${slotsBadge}</td>
       <td class="col-acoes">
         <button class="btn-pdf" data-id="${d.id}" title="Gerar PDF do resultado">PDF</button>
+        ${d.respostasQ ? `<button class="btn-detalhes" data-id="${d.id}" title="Ver respostas individuais">≡</button>` : ''}
         <button class="btn-liberar" data-email="${d.email}" data-nome="${d.nome}" title="Liberar novo teste para este participante">+</button>
         <button class="btn-lixeira" data-id="${d.id}" title="Excluir este registro">🗑</button>
       </td>
@@ -234,6 +236,11 @@ function renderizarTabela(dados) {
   // Listeners dos botões de PDF
   tbody.querySelectorAll('.btn-pdf').forEach((btn) => {
     btn.addEventListener('click', () => gerarPDFAdmin(btn.dataset.id, btn));
+  });
+
+  // Listeners dos botões de detalhes (respostas individuais)
+  tbody.querySelectorAll('.btn-detalhes').forEach((btn) => {
+    btn.addEventListener('click', () => toggleDetalhes(btn.dataset.id, btn));
   });
 
   // Listeners dos botões de lixeira individuais
@@ -408,6 +415,51 @@ async function liberarTeste(email, nome) {
     status.textContent = 'Erro de conexão ao liberar.';
     console.error(err);
   }
+}
+
+// ─── Detalhes: respostas individuais ────────────────────────────────────────
+
+function toggleDetalhes(id, btn) {
+  const tr = btn.closest('tr');
+  const existente = tr.nextElementSibling;
+  if (existente && existente.classList.contains('tr-detalhes')) {
+    existente.remove();
+    btn.classList.remove('ativo');
+    return;
+  }
+
+  const d = dadosAdmin.find((r) => r.id === id);
+  if (!d || !d.respostasQ) return;
+
+  const NOMES_PARTE = ['Na Rotina Real', 'Decisões e Relações', 'Sob Pressão', 'Liderança em Movimento'];
+  const perguntas = typeof PERGUNTAS !== 'undefined' ? PERGUNTAS : [];
+
+  const secoesHtml = NOMES_PARTE.map((nome, pi) => {
+    const qs = perguntas.filter((p) => p.parte === pi + 1);
+    const linhas = qs.map((p) => {
+      const val = d.respostasQ[p.id - 1] ?? '—';
+      const inv = p.invertida ? ' <span style="color:#aaa;font-size:0.7em">(inv)</span>' : '';
+      const cor = val >= 7 ? '#1A6B45' : val >= 4 ? '#B7770D' : '#CC4400';
+      return `<tr>
+        <td style="padding:4px 8px;color:#888;font-size:0.78rem;white-space:nowrap">${p.id}</td>
+        <td style="padding:4px 8px;font-size:0.82rem;line-height:1.4">${p.texto}${inv}</td>
+        <td style="padding:4px 12px;text-align:center;font-weight:700;color:${cor};white-space:nowrap">${val}</td>
+      </tr>`;
+    }).join('');
+    return `<div style="margin-bottom:12px">
+      <div style="font-size:0.75rem;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">${nome}</div>
+      <table style="width:100%;border-collapse:collapse">${linhas}</table>
+    </div>`;
+  }).join('');
+
+  const trDet = document.createElement('tr');
+  trDet.className = 'tr-detalhes';
+  trDet.innerHTML = `<td colspan="12" style="background:#FAFAF8;padding:16px 20px;border-bottom:2px solid var(--cor-borda)">
+    <strong style="font-size:0.85rem">Respostas de ${d.nome}</strong>
+    <div style="margin-top:12px;columns:2;column-gap:24px">${secoesHtml}</div>
+  </td>`;
+  tr.after(trDet);
+  btn.classList.add('ativo');
 }
 
 // ─── Gerar PDF de um registro ────────────────────────────────────────────────
