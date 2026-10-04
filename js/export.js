@@ -284,7 +284,7 @@ async function gerarPDF(scores, ud) {
 
   const S3T   = HH + 6;
   const IMG_W = 95; // coluna da ilustração
-  const TXT_W = CW - IMG_W - 8; // coluna de texto ~150mm
+  const TXT_W = CW - IMG_W - 22; // coluna de texto ~136mm (gap generoso p/ evitar overflow do jsPDF)
 
   // Intro breve
   pdf.setFont('helvetica','italic'); pdf.setFontSize(9); pdf.setTextColor(88,83,76);
@@ -322,7 +322,7 @@ async function gerarPDF(scores, ud) {
   });
 
   // Ilustração p3 à direita (altura total do conteúdo)
-  const IL3_X = ML + TXT_W + 8;
+  const IL3_X = PW - MR - IMG_W; // fixo em 180mm (22+136+22 = 180mm gap real de 22mm)
   const IL3_H = PH - S3T - 12;
   addImgFit(imgP3, IL3_X, S3T, IMG_W, IL3_H);
 
