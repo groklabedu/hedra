@@ -219,7 +219,7 @@ function renderizarTabela(dados) {
       <td class="col-tempo">${formatarTempo(d.tempoSegundos)}</td>
       <td class="col-slots">${slotsBadge}</td>
       <td class="col-acoes">
-        <button class="btn-pdf" data-id="${d.id}" title="Gerar PDF do resultado">PDF</button>
+        <button class="btn-pdf2" data-id="${d.id}" title="Gerar PDF do resultado">📄</button>
         ${d.respostasQ ? `<button class="btn-detalhes" data-id="${d.id}" title="Ver respostas individuais">≡</button>` : ''}
         <button class="btn-liberar" data-email="${d.email}" data-nome="${d.nome}" title="Liberar novo teste para este participante">+</button>
         <button class="btn-lixeira" data-id="${d.id}" title="Excluir este registro">🗑</button>
@@ -234,8 +234,8 @@ function renderizarTabela(dados) {
   });
 
   // Listeners dos botões de PDF
-  tbody.querySelectorAll('.btn-pdf').forEach((btn) => {
-    btn.addEventListener('click', () => gerarPDFAdmin(btn.dataset.id, btn));
+  tbody.querySelectorAll('.btn-pdf2').forEach((btn) => {
+    btn.addEventListener('click', () => gerarPDFAdminNovo(btn.dataset.id, btn));
   });
 
   // Listeners dos botões de detalhes (respostas individuais)
@@ -493,6 +493,32 @@ async function gerarPDFAdmin(id, btn) {
   } finally {
     btn.classList.remove('gerando');
     btn.textContent = 'PDF';
+  }
+}
+
+async function gerarPDFAdminNovo(id, btn) {
+  const d = dadosAdmin.find((r) => r.id === id);
+  if (!d) return;
+  btn.classList.add('gerando');
+  btn.textContent = '…';
+  try {
+    const scores = {
+      perfil:      d.perfil,
+      autodominio: Number(d.autodominio),
+      direcao:     Number(d.direcao),
+      influencia:  Number(d.influencia),
+      maestria:    Number(d.maestria),
+      eixoX:       Number(d.eixoX),
+      eixoY:       Number(d.eixoY),
+    };
+    const ud = { nome: d.nome, empresa: d.empresa || '', cargo: d.cargo || '' };
+    await gerarPDFNovo(scores, ud);
+  } catch (err) {
+    console.error('Erro ao gerar PDF novo:', err);
+    alert('Erro ao gerar PDF novo. Verifique o console.');
+  } finally {
+    btn.classList.remove('gerando');
+    btn.textContent = '⚡';
   }
 }
 

@@ -120,9 +120,9 @@
       color: #aaa;
     }
     .badge-slots-ativo {
-      background: #E8F5EE;
-      color: #1A6B45;
-      border: 1px solid #1A6B4540;
+      background: #edfaed;
+      color: #1ca31c;
+      border: 1px solid #1ca31c40;
     }
 
     /* Botões de ação */
@@ -140,12 +140,14 @@
     .btn-lixeira { color: #bbb; }
     .btn-lixeira:hover { color: #CC2200; background: #FFF0EE; }
     .btn-liberar { color: #aaa; font-weight: 700; }
-    .btn-liberar:hover { color: #1A6B45; background: #E8F5EE; }
+    .btn-liberar:hover { color: #1ca31c; background: #edfaed; }
     .btn-pdf { color: #aaa; font-size: 0.85rem; }
-    .btn-pdf:hover { color: #8B1A1A; background: #FDF0F0; }
+    .btn-pdf:hover { color: #651707; background: #fdf0e8; }
+    .btn-pdf2 { color: #aaa; font-size: 1rem; }
+    .btn-pdf2:hover { color: #651707; background: #fdf0e8; }
     .btn-pdf.gerando { opacity: 0.5; pointer-events: none; }
     .btn-detalhes { color: #aaa; font-size: 1.1rem; font-weight: 700; }
-    .btn-detalhes:hover, .btn-detalhes.ativo { color: #B7770D; background: #FFF8EE; }
+    .btn-detalhes:hover, .btn-detalhes.ativo { color: #651707; background: #fdf0e8; }
     .tr-detalhes td { border-top: none !important; }
 
     /* Barra de ações em massa */
@@ -185,7 +187,7 @@
     }
 
     /* Cabeçalhos ordenáveis */
-    th[data-sort]:hover { background: #8B1A1A; }
+    th[data-sort]:hover { background: #4a1005; }
     .sort-ico { opacity: 0.7; font-size: 0.75em; }
 
     /* Filtros */
@@ -265,19 +267,19 @@
           <h3 style="font-size:0.8rem;color:#888;margin-bottom:10px">Por perfil</h3>
           <div class="perfis-grid">
             <div class="perfil-count">
-              <div class="p-num" style="color:#CC4400" id="count-operador">0</div>
+              <div class="p-num" style="color:#f8572d" id="count-operador">0</div>
               <div class="p-nome">Operador Sobrecarregado</div>
             </div>
             <div class="perfil-count">
-              <div class="p-num" style="color:#1A5276" id="count-executor">0</div>
+              <div class="p-num" style="color:#1ca31c" id="count-executor">0</div>
               <div class="p-nome">Executor Eficiente</div>
             </div>
             <div class="perfil-count">
-              <div class="p-num" style="color:#B7770D" id="count-comunicador">0</div>
+              <div class="p-num" style="color:#8631f4" id="count-comunicador">0</div>
               <div class="p-nome">Comunicador Frágil</div>
             </div>
             <div class="perfil-count">
-              <div class="p-num" style="color:#1A6B45" id="count-lider">0</div>
+              <div class="p-num" style="color:#ffab24" id="count-lider">0</div>
               <div class="p-nome">Líder de Influência</div>
             </div>
           </div>
@@ -348,11 +350,13 @@
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/opentype.js@1.3.4/dist/opentype.min.js"></script>
+  <script src="js/fonts.js"></script>
   <script src="js/charts.js"></script>
   <script src="js/questions.js?v=2"></script>
   <script src="js/scoring.js?v=2"></script>
   <script src="js/resultado-content.js?v=2"></script>
-  <script src="js/export.js?v=19"></script>
+  <script src="js/export.js?v=44"></script>
   <script src="js/admin.js?v=6"></script>
 </body>
 </html>

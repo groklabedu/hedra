@@ -13,10 +13,10 @@ function renderarMapaHEDRA(canvasId, eixoX, eixoY, perfil) {
   if (oldSvg) oldSvg.remove();
 
   const COR = {
-    operador:    '#CC4400',
-    executor:    '#1A5276',
-    comunicador: '#B7770D',
-    lider:       '#1A6B45',
+    operador:    '#f8572d',
+    executor:    '#1ca31c',
+    comunicador: '#8631f4',
+    lider:       '#ffab24',
   };
 
   const NOMES = {
@@ -70,9 +70,6 @@ function renderarMapaHEDRA(canvasId, eixoX, eixoY, perfil) {
     <pattern id="hatch-${uid}" patternUnits="userSpaceOnUse" width="10" height="10" patternTransform="rotate(45)">
       <line x1="0" y1="0" x2="0" y2="10" stroke="#B8A88A" stroke-width="0.7" stroke-opacity="0.45"/>
     </pattern>
-    <filter id="pshadow-${uid}">
-      <feDropShadow dx="0" dy="2" stdDeviation="2.5" flood-color="rgba(0,0,0,0.28)"/>
-    </filter>
   </defs>
 
   <!-- Fundo hachurado -->
@@ -93,7 +90,7 @@ function renderarMapaHEDRA(canvasId, eixoX, eixoY, perfil) {
     fill="${c}" fill-opacity="${ativo ? 0.16 : 0.06}"
     stroke="${c}" stroke-width="${ativo ? 2.5 : 1}" stroke-opacity="${ativo ? 0.65 : 0.22}"/>
   ${lines.map((ln, i) => `<text x="${cx}" y="${ty + i * lineH}" text-anchor="middle"
-    font-family="system-ui,-apple-system,sans-serif" font-size="${ativo ? 11.5 : 10}" font-weight="700"
+    font-family="FinalSix,system-ui,sans-serif" font-size="${ativo ? 11.5 : 10}" font-weight="700"
     fill="${c}" fill-opacity="${ativo ? 1 : 0.5}">${ln}</text>`).join('')}`;
   }).join('')}
 
@@ -104,21 +101,18 @@ function renderarMapaHEDRA(canvasId, eixoX, eixoY, perfil) {
   <!-- Eixo X -->
   <line x1="${L}" y1="${B}" x2="${R+7}" y2="${B}" stroke="#666" stroke-width="1.8"/>
   <polygon points="${R+7},${B-4} ${R+14},${B} ${R+7},${B+4}" fill="#666"/>
-  <text x="${(L+R)/2}" y="${VH-2}" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11.5" fill="#555" font-weight="600">Direção</text>
+  <text x="${(L+R)/2}" y="${VH-2}" text-anchor="middle" font-family="FinalSix,system-ui,sans-serif" font-size="11.5" fill="#555" font-weight="600">Direção</text>
 
   <!-- Eixo Y -->
   <line x1="${L}" y1="${B}" x2="${L}" y2="${T-7}" stroke="#666" stroke-width="1.8"/>
   <polygon points="${L-4},${T-7} ${L},${T-14} ${L+4},${T-7}" fill="#666"/>
-  <text transform="rotate(-90,13,${(T+B)/2})" x="13" y="${(T+B)/2+4}" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11.5" fill="#555" font-weight="600">Impacto</text>
+  <text transform="rotate(-90,13,${(T+B)/2})" x="13" y="${(T+B)/2+4}" text-anchor="middle" font-family="FinalSix,system-ui,sans-serif" font-size="11.5" fill="#555" font-weight="600">Impacto</text>
 
-  <!-- Pin (ponta = âncora em y=0; corpo sobe até y=-46) -->
-  <g transform="translate(${pinX},${pinY})" filter="url(#pshadow-${uid})">
-    <ellipse cx="0" cy="2" rx="7" ry="2.5" fill="rgba(0,0,0,0.15)"/>
-    <path d="M0,0 C0,0 -17,-17 -17,-29 C-17,-36 -11,-46 0,-46 C11,-46 17,-36 17,-29 C17,-17 0,0 0,0 Z"
-      fill="#CC2200"/>
-    <path d="M0,0 C0,0 -17,-17 -17,-29 C-17,-36 -11,-46 0,-46 C11,-46 17,-36 17,-29 C17,-17 0,0 0,0 Z"
-      fill="none" stroke="white" stroke-width="1.5"/>
-    <circle cx="0" cy="-30" r="6.5" fill="rgba(255,255,255,0.4)"/>
+  <!-- Pin (ponta em y=0, ícone de localização na cor do perfil) -->
+  <g transform="translate(${pinX},${pinY})">
+    <g transform="scale(0.32) translate(-32,-63.72)">
+      <path d="m32 0a24.0319 24.0319 0 0 0 -24 24c0 17.23 22.36 38.81 23.31 39.72a.99.99 0 0 0 1.38 0c.95-.91 23.31-22.49 23.31-39.72a24.0319 24.0319 0 0 0 -24-24zm0 35a11 11 0 1 1 11-11 11.0066 11.0066 0 0 1 -11 11z" fill="${COR[perfil]}"/>
+    </g>
   </g>
 </svg>`;
 
@@ -137,7 +131,7 @@ function renderarDimensoes(canvasId, scores) {
       labels: ['Autodomínio', 'Direção', 'Influência', 'Maestria'],
       datasets: [{
         data: [scores.autodominio, scores.direcao, scores.influencia, scores.maestria],
-        backgroundColor: ['#8B1A1A', '#C8961A', '#1A5276', '#1A6B45'],
+        backgroundColor: ['#6a1908', '#ffab24', '#f8572d', '#037a54'],
         borderRadius: 4,
         borderSkipped: false,
       }],

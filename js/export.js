@@ -42,10 +42,10 @@ async function gerarPDF(scores, ud) {
   }
 
   const DIMS = [
-    {label:'Autodomínio', val:scores.autodominio, c:rgb('#8B1A1A')},
-    {label:'Direção',     val:scores.direcao,     c:rgb('#C8961A')},
-    {label:'Influência',  val:scores.influencia,  c:rgb('#1A5276')},
-    {label:'Maestria',    val:scores.maestria,    c:rgb('#1A6B45')},
+    {label:'Autodomínio', val:scores.autodominio, c:rgb('#6a1908')},
+    {label:'Direção',     val:scores.direcao,     c:rgb('#ffab24')},
+    {label:'Influência',  val:scores.influencia,  c:rgb('#f8572d')},
+    {label:'Maestria',    val:scores.maestria,    c:rgb('#037a54')},
   ];
 
   // ── Carrega imagem como data URL via canvas ───────────────────────────────
@@ -537,4 +537,296 @@ function _mapaFallback(pdf, x, y, w, h, perfil, COR, rgb, tint) {
       pdf.text('SEU RESULTADO',qx+QW/2,qy+QH-3.2,{align:'center'});
     }
   });
+}
+
+// ─── NOVO: Gerador PDF 16:9 com fundo PNG do Illustrator ─────────────────────
+async function gerarPDFNovo(scores, ud) {
+  const { jsPDF } = window.jspdf;
+  const PW = 338.67, PH = 190.5;
+  const SF = 72 / 25.4;  // mm → pt
+  const pdf = new jsPDF({ orientation: 'l', unit: 'mm', format: [PW, PH] });
+
+  // ── Carregar fontes via opentype.js (texto como paths vetoriais) ──────────
+  function b64ToArrayBuffer(b64) {
+    const bin = atob(b64);
+    const buf = new ArrayBuffer(bin.length);
+    const u8  = new Uint8Array(buf);
+    for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+    return buf;
+  }
+
+  let otBold = null, otLight = null, otXBold = null, otBlack = null;
+  try {
+    if (typeof opentype !== 'undefined') {
+      if (typeof FONT_FINALSIX_BOLD      !== 'undefined') otBold  = opentype.parse(b64ToArrayBuffer(FONT_FINALSIX_BOLD));
+      if (typeof FONT_FINALSIX_LIGHT     !== 'undefined') otLight = opentype.parse(b64ToArrayBuffer(FONT_FINALSIX_LIGHT));
+      if (typeof FONT_FINALSIX_EXTRABOLD !== 'undefined') otXBold = opentype.parse(b64ToArrayBuffer(FONT_FINALSIX_EXTRABOLD));
+      if (typeof FONT_FINALSIX_BLACK     !== 'undefined') otBlack = opentype.parse(b64ToArrayBuffer(FONT_FINALSIX_BLACK));
+    }
+  } catch(e) { console.warn('[PDF] opentype.parse:', e); }
+
+  function measureText(text, otFont, fs_pt) {
+    if (!otFont || !text) return 0;
+    return otFont.stringToGlyphs(text).reduce((acc, g) => acc + (g.advanceWidth || 0), 0) * fs_pt / otFont.unitsPerEm;
+  }
+
+  function pathToPDF(otPath) {
+    const parts = [];
+    for (const cmd of otPath.commands) {
+      switch (cmd.type) {
+        case 'M': parts.push(`${cmd.x.toFixed(3)} ${cmd.y.toFixed(3)} m`); break;
+        case 'L': parts.push(`${cmd.x.toFixed(3)} ${cmd.y.toFixed(3)} l`); break;
+        case 'C': parts.push(`${cmd.x1.toFixed(3)} ${cmd.y1.toFixed(3)} ${cmd.x2.toFixed(3)} ${cmd.y2.toFixed(3)} ${cmd.x.toFixed(3)} ${cmd.y.toFixed(3)} c`); break;
+        case 'Q': parts.push(`${cmd.x1.toFixed(3)} ${cmd.y1.toFixed(3)} ${cmd.x1.toFixed(3)} ${cmd.y1.toFixed(3)} ${cmd.x.toFixed(3)} ${cmd.y.toFixed(3)} c`); break;
+        case 'Z': parts.push('h'); break;
+      }
+    }
+    return parts.join(' ');
+  }
+
+  // Desenha texto com auto-fit como paths vetoriais (sem embedding de fonte)
+  // x_mm, y_mm: centro visual do texto (baseline: 'middle')
+  function drawText(text, x_mm, y_mm, maxW_mm, fs_pt, otFont, r, g, b) {
+    if (!otFont || !text) return;
+    const maxW_pt = maxW_mm * SF;
+    let fs = fs_pt;
+    while (fs > 3 && measureText(text, otFont, fs) > maxW_pt) fs -= 0.5;
+
+    const asc = otFont.ascender  * fs / otFont.unitsPerEm;
+    const dsc = Math.abs(otFont.descender) * fs / otFont.unitsPerEm;
+    const yBasePt = (PH - y_mm) * SF - (asc - dsc) / 2;
+    const xPt     = x_mm * SF;
+
+    const pdfOps = pathToPDF(otFont.getPath(text, 0, 0, fs));
+    if (!pdfOps) return;
+
+    const cr = (r/255).toFixed(4), cg = (g/255).toFixed(4), cb = (b/255).toFixed(4);
+    pdf.internal.write('q');
+    pdf.internal.write(`${cr} ${cg} ${cb} rg`);
+    pdf.internal.write(`1 0 0 -1 ${xPt.toFixed(3)} ${yBasePt.toFixed(3)} cm`);
+    pdf.internal.write(pdfOps);
+    pdf.internal.write('f');
+    pdf.internal.write('Q');
+  }
+
+  // Texto centralizado horizontalmente em cx_mm
+  function drawTextCenter(text, cx_mm, y_mm, fs_pt, otFont, r, g, b) {
+    if (!otFont || !text) return;
+    const w_mm = measureText(text, otFont, fs_pt) / SF;
+    drawText(text, cx_mm - w_mm / 2, y_mm, w_mm + 5, fs_pt, otFont, r, g, b);
+  }
+
+  const p     = scores.perfil;
+  const nome  = (ud.nome    || '').trim();
+  const emp   = (ud.empresa || '').trim();
+  const cargo = (ud.cargo   || '').trim();
+
+  async function loadImgData(src) {
+    return new Promise((res) => {
+      try {
+        const xhr = new XMLHttpRequest();
+        xhr.open('GET', src + '?_=' + Date.now(), true);
+        xhr.responseType = 'arraybuffer';
+        xhr.onload = function() {
+          try {
+            const bytes = new Uint8Array(xhr.response);
+            let binary = '';
+            for (let i = 0; i < bytes.byteLength; i += 8192) {
+              binary += String.fromCharCode.apply(null, bytes.subarray(i, i + 8192));
+            }
+            res('data:image/png;base64,' + btoa(binary));
+          } catch(e) { console.warn('[PDF] Erro ao converter PNG:', e); res(null); }
+        };
+        xhr.onerror = () => { console.warn('[PDF] Imagem não encontrada:', src); res(null); };
+        xhr.send();
+      } catch(e) { res(null); }
+    });
+  }
+
+  // Barras de score — coordenadas em mm (Illustrator ÷ 2)
+  const BARS = [
+    { score: scores.autodominio, cor: '#6a1908', barY: 106.37, pctY: 100.61 },
+    { score: scores.direcao,     cor: '#ffab24', barY: 121.53, pctY: 115.77 },
+    { score: scores.influencia,  cor: '#f8572d', barY: 136.95, pctY: 131.19 },
+    { score: scores.maestria,    cor: '#037a54', barY: 151.49, pctY: 145.73 },
+  ];
+  const BAR_X    = 172.69;
+  const BAR_MAXW = 120.18;
+  const BAR_H    = 4.85;
+  const PCT_X    = 279.49;
+
+  function hex2rgb(h) {
+    return [parseInt(h.slice(1,3),16), parseInt(h.slice(3,5),16), parseInt(h.slice(5,7),16)];
+  }
+
+  // ── SLIDE 1 ───────────────────────────────────────────────────────────────
+  const bg1 = await loadImgData(`assets/slides/${p}/slide1.png`);
+  if (bg1) pdf.addImage(bg1, 'PNG', 0, 0, PW, PH, '', 'NONE');
+
+  drawText(nome, 13.98, 140.06, 130, 17, otLight, 248, 239, 224);
+
+  drawText(nome,  206, 28.95, 119, 13, otBold, 101, 23, 7);
+  drawText(emp,   206, 39.87, 119, 13, otBold, 101, 23, 7);
+  drawText(cargo, 206, 51.93, 119, 13, otBold, 101, 23, 7);
+
+  const BAR_R = BAR_H / 2;
+  BARS.forEach((b) => {
+    const [r, g, bv] = hex2rgb(b.cor);
+    const fillW  = BAR_MAXW * (Math.min(b.score, 100) / 100);
+    const barTop = b.barY - BAR_H / 2;
+
+    pdf.setFillColor(246, 236, 219);
+    pdf.roundedRect(BAR_X, barTop, BAR_MAXW, BAR_H, BAR_R, BAR_R, 'F');
+
+    if (fillW > 0) {
+      const rx = Math.min(BAR_R, fillW / 2);
+      pdf.setFillColor(r, g, bv);
+      pdf.roundedRect(BAR_X, barTop, fillW, BAR_H, rx, rx, 'F');
+    }
+
+    drawText(`${Math.round(b.score)}%`, PCT_X, b.pctY, 50, 14, otXBold, r, g, bv);
+  });
+
+  // ── SLIDE 2 ───────────────────────────────────────────────────────────────
+  pdf.addPage([PW, PH], 'l');
+  const bg2 = await loadImgData(`assets/slides/${p}/slide2.png`);
+  if (bg2) pdf.addImage(bg2, 'PNG', 0, 0, PW, PH, '', 'NONE');
+
+  const BARS2 = [
+    { score: scores.autodominio, cor: '#6a1908', barY: 131.94, pctY: 127.76 },
+    { score: scores.direcao,     cor: '#ffab24', barY: 142.94, pctY: 138.76 },
+    { score: scores.influencia,  cor: '#f8572d', barY: 154.13, pctY: 149.95 },
+    { score: scores.maestria,    cor: '#037a54', barY: 164.68, pctY: 160.50 },
+  ];
+  const BAR_X2    = 207.45;
+  const BAR_MAXW2 = 87.21;
+  const BAR_H2    = 3.52;
+  const BAR_R2    = BAR_H2 / 2;
+  const PCT_X2    = 284.94;
+
+  BARS2.forEach((b) => {
+    const [r, g, bv] = hex2rgb(b.cor);
+    const fillW  = BAR_MAXW2 * (Math.min(b.score, 100) / 100);
+    const barTop = b.barY - BAR_H2 / 2;
+
+    pdf.setFillColor(246, 236, 219);
+    pdf.roundedRect(BAR_X2, barTop, BAR_MAXW2, BAR_H2, BAR_R2, BAR_R2, 'F');
+
+    if (fillW > 0) {
+      const rx = Math.min(BAR_R2, fillW / 2);
+      pdf.setFillColor(r, g, bv);
+      pdf.roundedRect(BAR_X2, barTop, fillW, BAR_H2, rx, rx, 'F');
+    }
+
+    drawText(`${Math.round(b.score)}%`, PCT_X2, b.pctY, 50, 10, otXBold, r, g, bv);
+  });
+
+  // ── PIN no gráfico — posição real do participante ─────────────────────────
+  // Medido diretamente do PNG (1920×1080 = 338.67×190.5mm):
+  //   eixo Y (borda esq. dos dados): x=126px, divisor vertical: x=511px,
+  //   divisor horizontal: y=545px, eixo X (borda inf.): y=814px
+  const CHART_X = 22.225;      // borda esquerda da área de dados (onde o eixo Y está)
+  const CHART_Y = 48.684;      // borda superior da área de dados
+  const CHART_W = 135.822;     // largura total da área de dados (2 × 67.911)
+  const CHART_H = 94.898;      // altura total da área de dados  (2 × 47.449)
+
+  // Cor do pin por perfil
+  const PERFIL_CORES = { operador:'#f8572d', executor:'#1ca31c', comunicador:'#8631f4', lider:'#ffab24' };
+  const pinCor = PERFIL_CORES[p] || '#f8572d';
+
+  // Cor de destaque por perfil — usada nos textos dinâmicos coloridos (ex: "Caro(a)")
+  // TODO: substituir placeholder do executor quando a cor for definida
+  const CORES_DESTAQUE = {
+    operador:    [248, 87,  45],   // #f8572d ✓
+    executor:    [ 28, 163,  28],   // #1ca31c ✓
+    comunicador: [134, 49, 244],   // #8631f4 ✓
+    lider:       [229, 142, 37],   // #e58e25 ✓
+  };
+  const [cR, cG, cB] = CORES_DESTAQUE[p] || [248, 87, 45];
+
+  function renderPin(size_px, colorHex) {
+    const cvs = document.createElement('canvas');
+    cvs.width = cvs.height = size_px;
+    const ctx = cvs.getContext('2d');
+    const path = new Path2D('m32 0a24.0319 24.0319 0 0 0 -24 24c0 17.23 22.36 38.81 23.31 39.72a.99.99 0 0 0 1.38 0c.95-.91 23.31-22.49 23.31-39.72a24.0319 24.0319 0 0 0 -24-24zm0 35a11 11 0 1 1 11-11 11.0066 11.0066 0 0 1 -11 11z');
+    ctx.scale(size_px / 64, size_px / 64);
+    ctx.fillStyle = colorHex;
+    ctx.fill(path, 'evenodd');
+    return cvs.toDataURL('image/png');
+  }
+
+  const PIN_H = 13;    // altura do pin em mm
+  const PIN_W = PIN_H; // SVG é 64×64 — aspecto quadrado
+
+  // eixoX: Direção (0–100), eixoY: (Influência+Maestria)/2 (0–100)
+  const ex = typeof scores.eixoX === 'number' ? scores.eixoX : 50;
+  const ey = typeof scores.eixoY === 'number' ? scores.eixoY : 50;
+
+  // Replicar lógica do charts.js:
+  // 1) Clamp para garantir que o pin fique dentro do quadrante correto
+  const THR = 70;
+  const needsHighX = (p === 'executor' || p === 'lider');
+  const needsHighY = (p === 'comunicador' || p === 'lider');
+  const px = needsHighX ? Math.min(Math.max(ex, THR + 5), 99) : Math.max(Math.min(ex, THR - 11), 1);
+  const py = needsHighY ? Math.min(Math.max(ey, THR + 2), 99) : Math.max(Math.min(ey, THR - 5),  1);
+
+  // 2) Escala não-linear: THR = centro visual do gráfico
+  const scX = (s) => s <= THR
+    ? CHART_X + (s / THR) * (CHART_W / 2)
+    : CHART_X + CHART_W / 2 + ((s - THR) / (100 - THR)) * (CHART_W / 2);
+  const scY = (s) => s <= THR
+    ? (CHART_Y + CHART_H) - (s / THR) * (CHART_H / 2)
+    : (CHART_Y + CHART_H / 2) - ((s - THR) / (100 - THR)) * (CHART_H / 2);
+
+  const tipX = scX(px);
+  const tipY = scY(py);
+
+  const pinImg = renderPin(256, pinCor);
+  // addImage: topo-esquerda do bounding-box; tip do pin fica no fundo-centro
+  pdf.addImage(pinImg, 'PNG', tipX - PIN_W / 2, tipY - PIN_H, PIN_W, PIN_H);
+
+  // Tag à direita do pin — botão da tag voltado para o pin, gap de 0.5mm
+  const TAG_GAP = 0.5;
+  const TAG_H   = PIN_H;
+  const TAG_W   = TAG_H * (229 / 80);  // proporção original
+  const tagImg  = await loadImgData(`assets/slides/${p}/tag.png`);
+  if (tagImg) {
+    pdf.addImage(tagImg, 'PNG', tipX + PIN_W / 2 + TAG_GAP, tipY - PIN_H, TAG_W, TAG_H);
+  }
+
+  // "você está aqui" — FSBold 7pt, #651707, centralizado sob o pin
+  drawTextCenter('você está aqui', tipX, tipY + 3.5, 9, otBold, 101, 23, 7);
+
+  // ── SLIDE 3 — sem placeholders ───────────────────────────────────────────
+  pdf.addPage([PW, PH], 'l');
+  const bg3 = await loadImgData(`assets/slides/${p}/slide3.png`);
+  if (bg3) pdf.addImage(bg3, 'PNG', 0, 0, PW, PH, '', 'NONE');
+
+  // ── SLIDE 4 — sem placeholders ───────────────────────────────────────────
+  pdf.addPage([PW, PH], 'l');
+  const bg4 = await loadImgData(`assets/slides/${p}/slide4.png`);
+  if (bg4) pdf.addImage(bg4, 'PNG', 0, 0, PW, PH, '', 'NONE');
+
+  // ── SLIDE 5 ───────────────────────────────────────────────────────────────
+  pdf.addPage([PW, PH], 'l');
+  const bg5 = await loadImgData(`assets/slides/${p}/slide5.png`);
+  if (bg5) pdf.addImage(bg5, 'PNG', 0, 0, PW, PH, '', 'NONE');
+
+  // "Caro(a) [Nome]," — FSBlack 20pt (#f8572d)
+  // Illustrator: X=395.185, Y=87.063, W=188.958, H=16.655  →  ÷2
+  const s5x = 395.185 / 2 + 1;
+  const s5y = (87.063 + 16.655 / 2) / 2 - 3;
+  const s5w = 188.958 / 2;
+  const primeiroNome = nome.split(' ')[0];
+  drawText(`Caro(a) ${primeiroNome},`, s5x, s5y, s5w, 20, otBlack || otXBold, cR, cG, cB);
+
+  // ── SLIDE 6 — sem placeholders ───────────────────────────────────────────
+  pdf.addPage([PW, PH], 'l');
+  const bg6 = await loadImgData(`assets/slides/${p}/slide6.png`);
+  if (bg6) pdf.addImage(bg6, 'PNG', 0, 0, PW, PH, '', 'NONE');
+
+  const slug = nome.toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  pdf.save(`relatorio-novo-${slug || 'participante'}.pdf`);
 }

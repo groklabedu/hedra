@@ -7,7 +7,7 @@
   <meta property="og:title" content="Matriz HEDRA">
   <meta property="og:description" content="Matriz de Maturidade da Liderança">
   <title>Matriz HEDRA</title>
-  <link rel="stylesheet" href="css/style.css?v=9">
+  <link rel="stylesheet" href="css/style.css?v=12">
 </head>
 <body>
 
@@ -160,7 +160,7 @@
     <!-- Cabeçalho de navegação -->
     <div class="rp-header">
       <div class="rp-dots" id="rp-dots"></div>
-      <span class="rp-pagina-num" id="rp-pagina-num">1 / 5</span>
+      <span class="rp-pagina-num" id="rp-pagina-num">1 / 6</span>
     </div>
 
     <!-- Páginas (conteúdo renderizado por JS) -->
@@ -170,12 +170,14 @@
       <div class="rp-page" id="rp-page-3"></div>
       <div class="rp-page" id="rp-page-4"></div>
       <div class="rp-page" id="rp-page-5"></div>
+      <div class="rp-page" id="rp-page-6"></div>
     </div>
 
-    <!-- Botões de navegação -->
-    <div class="rp-nav-btns">
-      <button class="btn btn-secundario" id="btn-rp-voltar" hidden>← Voltar</button>
-      <button class="btn btn-primario"   id="btn-rp-avancar">Próximo →</button>
+    <!-- Botões de navegação (fixos no rodapé) -->
+    <div class="rp-nav-btns" id="rp-nav-btns">
+      <button class="btn btn-nav-voltar" id="btn-rp-voltar">← Voltar</button>
+      <button class="btn btn-nav-pdf"    id="btn-rp-pdf-nav">⬇ PDF</button>
+      <button class="btn btn-nav-avancar" id="btn-rp-avancar">Próximo →</button>
     </div>
 
   </div><!-- /tela-resultado -->
@@ -184,14 +186,16 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/opentype.js@1.3.4/dist/opentype.min.js"></script>
+  <script src="js/fonts.js"></script>
 
   <!-- App -->
   <script src="js/questions.js?v=2"></script>
   <script src="js/scoring.js?v=2"></script>
-  <script src="js/charts.js?v=5"></script>
-  <script src="js/export.js?v=19"></script>
+  <script src="js/charts.js?v=6"></script>
+  <script src="js/export.js?v=44"></script>
   <script src="js/resultado-content.js?v=2"></script>
-  <script src="js/resultado.js?v=8"></script>
+  <script src="js/resultado.js?v=10"></script>
   <script src="js/app.js?v=5"></script>
 
 </body>

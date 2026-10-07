@@ -428,3 +428,29 @@ function renderizarResultado(scores) {
 
   document.body.appendChild(bar);
 }());
+
+// ─── Dev shortcut (?skip) — pula o formulário de identificação ───────────────
+
+(function () {
+  if (!new URLSearchParams(window.location.search).has('skip')) return;
+
+  document.addEventListener('DOMContentLoaded', function () {
+    userData = {
+      nome:     'Dev Test',
+      email:    'dev@teste.local',
+      fone:     '(11) 99999-9999',
+      empresa:  'Empresa Teste',
+      cargo:    'Cargo Teste',
+      area:     'Área Teste',
+      estado:   'SP',
+      cidade:   'São Paulo',
+      override: false,
+    };
+
+    secaoAtual = 1;
+    respostas = new Array(TOTAL_PERGUNTAS).fill(5);
+    _testeInicio = Date.now();
+    renderizarSecao(1);
+    mostrarTela('tela-teste');
+  });
+}());
