@@ -278,19 +278,19 @@ function mostrarPerguntaAberta() {
       <div class="quadrantes-preview">
         <div class="qp-eixo-y">↑ Impacto</div>
         <div class="qp-grid">
-          <div class="qp-cell" style="border-color:#B7770D40;color:#B7770D">
+          <div class="qp-cell" style="border-color:#8631f440;color:#8631f4">
             <strong>Comunicador Frágil</strong><br>
             <span style="font-weight:400;font-size:0.75rem">"Tenho boa relação com o time, mas nem sempre consigo direcionar com firmeza."</span>
           </div>
-          <div class="qp-cell" style="border-color:#1A6B4540;color:#1A6B45">
+          <div class="qp-cell" style="border-color:#ffab2440;color:#ffab24">
             <strong>Líder de Influência Estratégica</strong><br>
             <span style="font-weight:400;font-size:0.75rem">"Eu defino direção, mobilizo pessoas e desenvolvo autonomia no time."</span>
           </div>
-          <div class="qp-cell" style="border-color:#CC440040;color:#CC4400">
+          <div class="qp-cell" style="border-color:#f8572d40;color:#f8572d">
             <strong>Operador Sobrecarregado</strong><br>
             <span style="font-weight:400;font-size:0.75rem">"Faço tudo, resolvo tudo... e ainda sinto que nada sai do lugar."</span>
           </div>
-          <div class="qp-cell" style="border-color:#1A527640;color:#1A5276">
+          <div class="qp-cell" style="border-color:#1ca31c40;color:#1ca31c">
             <strong>Executor Eficiente</strong><br>
             <span style="font-weight:400;font-size:0.75rem">"Eu garanto a entrega, mas ainda carrego o time nas costas."</span>
           </div>

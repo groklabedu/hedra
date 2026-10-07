@@ -99,10 +99,10 @@ async function carregarDados() {
 // ─── Renderizar painel ───────────────────────────────────────────────────────
 
 const PERFIS_LABELS = {
-  operador:    { nome: 'Operador Sobrecarregado',         cor: '#CC4400' },
-  executor:    { nome: 'Executor Eficiente',              cor: '#1A5276' },
-  comunicador: { nome: 'Comunicador Frágil',              cor: '#B7770D' },
-  lider:       { nome: 'Líder de Influência Estratégica', cor: '#1A6B45' },
+  operador:    { nome: 'Operador Sobrecarregado',         cor: '#f8572d' },
+  executor:    { nome: 'Executor Eficiente',              cor: '#1ca31c' },
+  comunicador: { nome: 'Comunicador Frágil',              cor: '#8631f4' },
+  lider:       { nome: 'Líder de Influência Estratégica', cor: '#ffab24' },
 };
 
 // Suporta tanto chave quanto nome completo vindo da planilha
