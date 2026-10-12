@@ -770,7 +770,6 @@ textarea { resize: vertical; }
   margin: 0 auto;
   position: relative;
   z-index: 1;
-  background: var(--cor-fundo);
 }
 
 .rp-supertitulo {
@@ -1746,16 +1745,18 @@ textarea { resize: vertical; }
 @media (min-width: 900px) {
   .rp2-hero { padding: 40px 40px 40px; min-height: 100%; }
   .rp2-hero-nome-perfil { font-size: 1.8rem; }
-  .rp2-intro { font-size: 1rem; }
-  .rp2-col-item { font-size: 0.78rem; }
-  .rp2-pressao-quote { font-size: 0.9rem; }
+  .rp2-intro,
+  .rp2-pressao-quote,
+  .rp2-carta-texto,
+  .rp2-pergunta,
+  .rp2-perfil-resumo,
+  .rp2-fechamento { font-size: 1rem; line-height: 1.65; }
+  .rp2-col-item { font-size: 0.94rem; line-height: 1.5; }
   .rp2-movimento-texto { font-size: 1rem; }
   .rp2-lembrese { font-size: 1.25rem; }
   .rp2-carta-saudacao { font-size: 1.5rem; }
-  .rp2-carta-texto { font-size: 0.9rem; }
-  .rp2-pergunta { font-size: 0.88rem; }
-  .rp2-perfil-resumo { font-size: 0.82rem; }
   .rp2-dim-label { font-size: 0.8rem; width: 90px; }
   .rp2-dim-val { font-size: 0.8rem; }
   .rp2-map-wrap .hedra-mapa { max-width: none; }
+  .rp-img-wrap.rp2-map-wrap { flex-basis: 560px; padding-top: 24px !important; }
 }
