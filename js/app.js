@@ -39,23 +39,54 @@ async function carregarTermoLGPD() {
 carregarTermoLGPD();
 
 const TELAS_COM_MORPH = ['tela-capa', 'tela-intro'];
+const ORDEM_TELAS = ['tela-capa', 'tela-intro', 'tela-identificacao', 'tela-teste', 'tela-resultado'];
+const DUR_SAIDA = 380;
+const SEM_MOVIMENTO = window.matchMedia('(prefers-reduced-motion: reduce)');
+let _trocaPendente = null;
 
-function mostrarTela(id) {
+function animarSaida(elementos, frente, aoTerminar) {
+  const classe = frente ? 'saindo-frente' : 'saindo-tras';
+  elementos.forEach((el) => el.classList.add(classe));
+  const timer = setTimeout(() => {
+    _trocaPendente = null;
+    elementos.forEach((el) => el.classList.remove('saindo-frente', 'saindo-tras'));
+    aoTerminar();
+  }, DUR_SAIDA);
+  _trocaPendente = () => { clearTimeout(timer); elementos.forEach((el) => el.classList.remove('saindo-frente', 'saindo-tras')); aoTerminar(); };
+}
+
+function concluirTrocaPendente() {
+  if (!_trocaPendente) return false;
+  const f = _trocaPendente;
+  _trocaPendente = null;
+  f();
+  return true;
+}
+
+// opcoes.semAnimacao: atalhos de desenvolvimento; opcoes.antes: roda logo antes de exibir a nova tela
+function mostrarTela(id, opcoes = {}) {
+  const pendente = concluirTrocaPendente();
   const atual = document.body.dataset.tela;
-  const trocar = () => {
+  const trocar = (viaMorph) => {
+    if (opcoes.antes) opcoes.antes();
     if (atual === 'tela-capa') document.body.classList.add('capa-vista');
     document.querySelectorAll('.tela').forEach((t) => t.classList.remove('ativa'));
     document.getElementById(id).classList.add('ativa');
     document.body.dataset.tela = id;
+    document.body.dataset.via = viaMorph ? 'morph' : '';
     window.scrollTo(0, 0);
   };
 
-  const morph = document.startViewTransition
-    && !window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    && TELAS_COM_MORPH.includes(atual) && TELAS_COM_MORPH.includes(id);
+  const animar = !opcoes.semAnimacao && !pendente && !SEM_MOVIMENTO.matches && atual !== id;
 
-  if (morph) document.startViewTransition(trocar).ready.catch(() => {});
-  else trocar();
+  if (animar && document.startViewTransition && TELAS_COM_MORPH.includes(atual) && TELAS_COM_MORPH.includes(id)) {
+    document.startViewTransition(() => trocar(true)).ready.catch(() => {});
+  } else if (animar && document.getElementById(atual)) {
+    const frente = ORDEM_TELAS.indexOf(id) >= ORDEM_TELAS.indexOf(atual);
+    animarSaida([document.getElementById(atual)], frente, () => trocar(false));
+  } else {
+    trocar(false);
+  }
 }
 
 // ─── Capa e introdução ──────────────────────────────────────────────────────
@@ -192,8 +223,7 @@ function mostrarBloqueado(email, dadosAnteriores) {
         eixoY:       Number(dadosAnteriores.eixo_y),
         perfil:      dadosAnteriores.perfil,
       };
-      renderizarResultado(scoreData);
-      mostrarTela('tela-resultado');
+      mostrarTela('tela-resultado', { antes: () => renderizarResultado(scoreData) });
     } else {
       alert('Não foi possível recuperar o resultado anterior.');
     }
@@ -220,13 +250,13 @@ function iniciarTeste(email, override) {
   secaoAtual = 1;
   respostas = new Array(TOTAL_PERGUNTAS).fill(5);
   _testeInicio = Date.now();
-  renderizarSecao(1);
-  mostrarTela('tela-teste');
+  mostrarTela('tela-teste', { antes: () => renderizarSecao(1) });
 }
 
 // ─── Tela 2: Teste ──────────────────────────────────────────────────────────
 
 function renderizarSecao(secao) {
+  document.querySelector('#tela-teste .instrucao-box').classList.remove('oculto');
   const parte    = PARTES[secao - 1];
   const perguntas = PERGUNTAS.filter((p) => p.parte === secao);
   const offset   = (secao - 1) * PERGUNTAS_POR_BLOCO;
@@ -286,33 +316,46 @@ function atualizarBotaoVoltar() {
   btn.style.display = secaoAtual > 1 ? '' : 'none';
 }
 
+function trocarSecao(frente, renderizar, extras = []) {
+  concluirTrocaPendente();
+  const header = document.querySelector('#tela-teste .secao-header');
+  const perguntas = document.getElementById('perguntas-container');
+  const exibir = () => {
+    renderizar();
+    atualizarBotaoVoltar();
+  };
+  if (SEM_MOVIMENTO.matches) exibir();
+  else animarSaida([...extras, header, perguntas], frente, exibir);
+}
+
 document.getElementById('btn-avancar').addEventListener('click', () => {
+  if (_trocaPendente) return;
   if (secaoAtual < 4) {
     secaoAtual++;
-    renderizarSecao(secaoAtual);
+    trocarSecao(true, () => renderizarSecao(secaoAtual));
   } else if (secaoAtual === 4) {
     secaoAtual = 5;
-    mostrarPerguntaAberta();
+    trocarSecao(true, mostrarPerguntaAberta, [document.querySelector('#tela-teste .instrucao-box')]);
   } else if (secaoAtual === 5) {
     finalizarTeste();
   }
-  atualizarBotaoVoltar();
 });
 
 document.getElementById('btn-voltar').addEventListener('click', () => {
+  if (_trocaPendente) return;
   if (secaoAtual === 5) {
     secaoAtual = 4;
-    renderizarSecao(4);
+    trocarSecao(false, () => renderizarSecao(4));
   } else if (secaoAtual > 1) {
     secaoAtual--;
-    renderizarSecao(secaoAtual);
+    trocarSecao(false, () => renderizarSecao(secaoAtual));
   }
-  atualizarBotaoVoltar();
 });
 
 // ─── Pergunta aberta ────────────────────────────────────────────────────────
 
 function mostrarPerguntaAberta() {
+  document.querySelector('#tela-teste .instrucao-box').classList.add('oculto');
   atualizarProgressBar(TOTAL_PERGUNTAS);
   document.getElementById('secao-titulo').textContent = 'Reflexão final';
   document.getElementById('secao-descricao').textContent = '';
@@ -367,8 +410,7 @@ async function finalizarTeste() {
 
   scoreData = calcularScore(respostas);
 
-  renderizarResultado(scoreData);
-  mostrarTela('tela-resultado');
+  mostrarTela('tela-resultado', { antes: () => renderizarResultado(scoreData) });
 
   enviarDados();
 }
@@ -456,7 +498,7 @@ function renderizarResultado(scores) {
   userData  = { nome: 'Preview Dev' };
   scoreData = mocks[p];
   renderizarResultado(scoreData);
-  mostrarTela('tela-resultado');
+  mostrarTela('tela-resultado', { semAnimacao: true });
 
   // Barra flutuante para trocar perfil rapidamente
   const bar = document.createElement('div');
@@ -504,6 +546,6 @@ function renderizarResultado(scores) {
     respostas = new Array(TOTAL_PERGUNTAS).fill(5);
     _testeInicio = Date.now();
     renderizarSecao(1);
-    mostrarTela('tela-teste');
+    mostrarTela('tela-teste', { semAnimacao: true });
   });
 }());

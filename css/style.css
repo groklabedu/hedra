@@ -2036,3 +2036,91 @@ header img, .capa-logo                     { view-transition-name: logo; }
   .tela.ativa *,
   .tela.ativa *::after { animation: none !important; }
 }
+
+/* ── Celular: forças/pontos empilhados e caminho de maturidade vertical ── */
+@keyframes mo-linha-v { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+
+@media (max-width: 899px) {
+  .rp2-cols { grid-template-columns: 1fr; gap: 12px; }
+
+  .rp2-steps {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+  }
+  .rp2-steps::before {
+    top: 20px;
+    bottom: 20px;
+    left: 19px;
+    right: auto;
+    width: 2px;
+    height: auto;
+  }
+  .rp2-step {
+    flex-direction: row;
+    align-items: center;
+    gap: 14px;
+  }
+  .rp2-step-label {
+    font-size: 0.95rem;
+    text-align: left;
+    max-width: none;
+  }
+  .rp-page.ativa .rp2-steps::before { transform-origin: top center; animation-name: mo-linha-v; }
+}
+
+/* ── Saída das páginas de resultado ────────────────────────────────────── */
+@keyframes mo-sai-frente { to { opacity: 0; transform: translateX(-32px); } }
+@keyframes mo-sai-tras   { to { opacity: 0; transform: translateX(32px); } }
+
+.rp-page.saindo-frente .rp-img-wrap,
+.rp-page.saindo-frente .rp-content > * { animation: mo-sai-frente 0.24s cubic-bezier(.55, 0, .7, .4) forwards; }
+.rp-page.saindo-tras .rp-img-wrap,
+.rp-page.saindo-tras .rp-content > *   { animation: mo-sai-tras 0.24s cubic-bezier(.55, 0, .7, .4) forwards; }
+
+.rp-page[class*="saindo-"] .rp-content > :nth-child(2) { animation-delay: 0.03s; }
+.rp-page[class*="saindo-"] .rp-content > :nth-child(3) { animation-delay: 0.06s; }
+.rp-page[class*="saindo-"] .rp-content > :nth-child(4) { animation-delay: 0.09s; }
+.rp-page[class*="saindo-"] .rp-content > :nth-child(5) { animation-delay: 0.12s; }
+.rp-page[class*="saindo-"] .rp-content > :nth-child(n+6) { animation-delay: 0.14s; }
+
+/* ── Saída entre telas do app e entre partes do inventário ─────────────── */
+.tela.saindo-frente .container > *,
+.tela.saindo-frente .capa-conteudo,
+#tela-teste .instrucao-box.saindo-frente,
+#tela-teste .secao-header.saindo-frente,
+#perguntas-container.saindo-frente {
+  animation: mo-sai-frente 0.24s cubic-bezier(.55, 0, .7, .4) forwards !important;
+}
+.tela.saindo-tras .container > *,
+.tela.saindo-tras .capa-conteudo,
+#tela-teste .instrucao-box.saindo-tras,
+#tela-teste .secao-header.saindo-tras,
+#perguntas-container.saindo-tras {
+  animation: mo-sai-tras 0.24s cubic-bezier(.55, 0, .7, .4) forwards !important;
+}
+.tela[class*="saindo-"] .container > :nth-child(2)    { animation-delay: 0.03s !important; }
+.tela[class*="saindo-"] .container > :nth-child(3)    { animation-delay: 0.06s !important; }
+.tela[class*="saindo-"] .container > :nth-child(4)    { animation-delay: 0.09s !important; }
+.tela[class*="saindo-"] .container > :nth-child(5)    { animation-delay: 0.12s !important; }
+.tela[class*="saindo-"] .container > :nth-child(n+6)  { animation-delay: 0.14s !important; }
+#perguntas-container[class*="saindo-"]                { animation-delay: 0.04s !important; }
+
+/* ── Entradas que faltavam ─────────────────────────────────────────────── */
+body:not([data-via="morph"]) #tela-intro.ativa .intro-box { animation: mo-sobe 0.7s var(--mo-ease) 0.05s both; }
+#tela-identificacao.ativa .btn-link { animation: mo-fade 0.6s var(--mo-ease) 0.4s both; }
+
+#tela-teste.ativa .step-indicator { animation: mo-pop 0.55s var(--mo-mola) both; }
+#tela-teste.ativa .step-indicator:nth-child(1) { animation-delay: 0.05s; }
+#tela-teste.ativa .step-indicator:nth-child(2) { animation-delay: 0.13s; }
+#tela-teste.ativa .step-indicator:nth-child(3) { animation-delay: 0.21s; }
+#tela-teste.ativa .step-indicator:nth-child(4) { animation-delay: 0.29s; }
+#tela-teste.ativa .progresso-wrapper { animation: mo-sobe 0.6s var(--mo-ease) 0.2s both; }
+#tela-teste.ativa .instrucao-box     { animation: mo-sobe 0.6s var(--mo-ease) 0.3s both; }
+#tela-teste.ativa .secao-header      { animation: mo-sobe 0.6s var(--mo-ease) 0.4s both; }
+#tela-teste.ativa .pergunta-item     { animation: mo-sobe 0.55s var(--mo-ease) both; animation-delay: 0.5s; }
+#tela-teste.ativa .pergunta-item:nth-child(2) { animation-delay: 0.56s; }
+#tela-teste.ativa .pergunta-item:nth-child(3) { animation-delay: 0.62s; }
+#tela-teste.ativa .pergunta-item:nth-child(4) { animation-delay: 0.68s; }
+#tela-teste.ativa .pergunta-item:nth-child(n+5) { animation-delay: 0.74s; }
+#tela-teste.ativa .nav-botoes        { animation: mo-sobe 0.6s var(--mo-ease) 0.8s both; }

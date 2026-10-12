@@ -256,17 +256,36 @@ function renderP6(pc, perfilInfo, nome) {
 
 // ─── Navegação entre páginas ─────────────────────────────────────────────────
 
+const RP_DUR_SAIDA = 380;
+let rpSaidaTimer = null;
+
 function rpMostrarPagina(nova, direcao) {
   const anterior = document.querySelector('.rp-page.ativa');
-  const proxima  = document.getElementById(`rp-page-${nova}`);
 
-  if (anterior) {
-    anterior.classList.remove('ativa');
-    if (direcao !== 'none') {
-      anterior.classList.add(direcao === 'frente' ? 'saindo-esq' : 'saindo-dir');
-      setTimeout(() => anterior.classList.remove('saindo-esq', 'saindo-dir'), 400);
-    }
+  // Clique durante uma saída em andamento: conclui a troca na hora
+  const saidaEmAndamento = rpSaidaTimer !== null;
+  if (saidaEmAndamento) {
+    clearTimeout(rpSaidaTimer);
+    rpSaidaTimer = null;
   }
+
+  const animarSaida = anterior && !saidaEmAndamento && direcao !== 'none' && !RP_SEM_MOVIMENTO.matches;
+  if (animarSaida) {
+    anterior.classList.add(direcao === 'frente' ? 'saindo-frente' : 'saindo-tras');
+    rpSaidaTimer = setTimeout(() => {
+      rpSaidaTimer = null;
+      rpTrocarPagina(anterior, nova, direcao);
+    }, RP_DUR_SAIDA);
+  } else {
+    rpTrocarPagina(anterior, nova, direcao);
+  }
+}
+
+function rpTrocarPagina(anterior, nova, direcao) {
+  const proxima = document.getElementById(`rp-page-${nova}`);
+  document.querySelectorAll('.rp-page.saindo-frente, .rp-page.saindo-tras')
+    .forEach((p) => p.classList.remove('saindo-frente', 'saindo-tras'));
+  if (anterior) anterior.classList.remove('ativa');
 
   proxima.classList.add('ativa');
   if (direcao !== 'none') proxima.classList.add(direcao === 'frente' ? 'entrando-dir' : 'entrando-esq');
