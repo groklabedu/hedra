@@ -20,6 +20,33 @@ function rpImgTag(src, alt) {
   return `<div class="rp-img-wrap"><img src="${src}" alt="${alt}" class="rp-img" onerror="this.parentElement.style.display='none'"></div>`;
 }
 
+// ─── Motion ──────────────────────────────────────────────────────────────────
+
+const RP_SEM_MOVIMENTO = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+function rpPalavras(texto) {
+  return texto.split(' ').map((w, i) =>
+    `<span class="mo-w"><span style="--i:${i}">${w}</span></span>`
+  ).join(' ');
+}
+
+function rpContarNumeros(pagina) {
+  pagina.querySelectorAll('[data-conta]').forEach((el) => {
+    const alvo = Number(el.dataset.conta);
+    if (RP_SEM_MOVIMENTO.matches) { el.textContent = `${alvo}%`; return; }
+    const atraso = Number(el.dataset.atraso || 0);
+    const dur = 900;
+    const t0 = performance.now() + atraso;
+    el.textContent = '0%';
+    const passo = (t) => {
+      const k = Math.min(Math.max((t - t0) / dur, 0), 1);
+      el.textContent = `${Math.round(alvo * (1 - Math.pow(1 - k, 3)))}%`;
+      if (k < 1) requestAnimationFrame(passo);
+    };
+    requestAnimationFrame(passo);
+  });
+}
+
 // ─── Renderizar todas as páginas ─────────────────────────────────────────────
 
 function renderizarResultadoPaginado(scores, nome) {
@@ -62,7 +89,7 @@ function renderP1(scores, pc, perfilInfo, nome) {
       <div class="rp2-hero">
         <span class="rp2-hero-tag">Inventário HEDRA</span>
         <p class="rp2-hero-label">Seu campo de liderança</p>
-        <p class="rp2-hero-nome-perfil" style="color:${perfilInfo.cor}">${perfilInfo.nome}</p>
+        <p class="rp2-hero-nome-perfil" style="color:${perfilInfo.cor}">${rpPalavras(perfilInfo.nome)}</p>
         <p class="rp2-hero-usuario">${primeiroNome}</p>
         <p class="rp2-hero-headline">${pc.headline}</p>
       </div>
@@ -82,13 +109,13 @@ function renderP1(scores, pc, perfilInfo, nome) {
 
       <div class="rp2-dim-card">
         <p class="rp2-dim-card-title">Dimensões de liderança</p>
-        ${dimBars.map(d => `
-          <div class="rp2-dim-row">
+        ${dimBars.map((d, i) => `
+          <div class="rp2-dim-row" style="--i:${i}">
             <span class="rp2-dim-label">${d.label}</span>
             <div class="rp2-dim-track">
               <div class="rp2-dim-fill" style="width:${d.val}%;background:${d.cor}"></div>
             </div>
-            <span class="rp2-dim-val" style="color:${d.cor}">${d.val}%</span>
+            <span class="rp2-dim-val" style="color:${d.cor}" data-conta="${d.val}" data-atraso="${850 + i * 120}">${d.val}%</span>
           </div>
         `).join('')}
       </div>
@@ -109,7 +136,7 @@ function renderP2(scores, pc, perfilInfo) {
 
       <div class="rp2-perfil-card" style="border-color:${perfilInfo.cor}">
         <p class="rp2-seu-resultado">Seu resultado</p>
-        <p class="rp2-perfil-nome" style="color:${perfilInfo.cor}">${perfilInfo.nome}</p>
+        <p class="rp2-perfil-nome" style="color:${perfilInfo.cor}">${rpPalavras(perfilInfo.nome)}</p>
         <p class="rp2-perfil-resumo">${RC.p2_resumos[scores.perfil]}</p>
       </div>
     </div>
@@ -119,20 +146,20 @@ function renderP2(scores, pc, perfilInfo) {
 // ─── Página 3 — Forças e Pontos de Atenção ───────────────────────────────────
 
 function renderP3(scores, pc, perfilInfo) {
-  const forcasItems = pc.forcas.map(f =>
-    `<div class="rp2-col-item"><span class="rp2-col-icon">✓</span>${f}</div>`
+  const forcasItems = pc.forcas.map((f, i) =>
+    `<div class="rp2-col-item" style="--i:${i}"><span class="rp2-col-icon">✓</span>${f}</div>`
   ).join('');
-  const pontosItems = pc.pontos.map(p =>
-    `<div class="rp2-col-item"><span class="rp2-col-icon">!</span>${p}</div>`
+  const pontosItems = pc.pontos.map((p, i) =>
+    `<div class="rp2-col-item" style="--i:${i}"><span class="rp2-col-icon">!</span>${p}</div>`
   ).join('');
 
   document.getElementById('rp-page-3').innerHTML = `
 
     <div class="rp-content">
       <span class="rp2-pill">Leitura Aprofundada</span>
-      <p class="rp2-subtitulo" style="color:${perfilInfo.cor}">${perfilInfo.nome}</p>
+      <p class="rp2-subtitulo" style="color:${perfilInfo.cor}">${rpPalavras(perfilInfo.nome)}</p>
 
-      ${pc.p3_intro.map(t => `<p class="rp2-intro">${t}</p>`).join('')}
+      ${pc.p3_intro.map((t, i) => `<p class="rp2-intro" style="--i:${i}">${t}</p>`).join('')}
 
       <div class="rp2-cols">
         <div class="rp2-col-card">
@@ -157,7 +184,7 @@ function renderP4(pc, perfilInfo) {
       <span class="rp2-pill">Sob Pressão</span>
       <p class="rp2-pressao-titulo">O que pode acontecer sob pressão</p>
 
-      ${pc.pressao.map(t => `<p class="rp2-pressao-quote">${t}</p>`).join('')}
+      ${pc.pressao.map((t, i) => `<p class="rp2-pressao-quote" style="--i:${i}">${t}</p>`).join('')}
 
       <div class="rp2-movimento">
         <p class="rp2-movimento-label">Movimento de maturidade</p>
@@ -174,14 +201,14 @@ function renderP4(pc, perfilInfo) {
 
 function renderP5(pc, perfilInfo) {
   const steps = pc.p4_steps.map((s, i) => `
-    <div class="rp2-step">
+    <div class="rp2-step" style="--i:${i}">
       <div class="rp2-step-circle" style="background:${perfilInfo.cor}">${i + 1}</div>
       <span class="rp2-step-label">${s}</span>
     </div>
   `).join('');
 
   const perguntas = pc.p4_perguntas.map((q, i) => `
-    <div class="rp2-pergunta">
+    <div class="rp2-pergunta" style="--i:${i}">
       <span class="rp2-pergunta-num" style="color:${perfilInfo.cor}">${i + 1}.</span>
       ${q}
     </div>
@@ -191,7 +218,7 @@ function renderP5(pc, perfilInfo) {
 
     <div class="rp-content">
       <span class="rp2-pill">Caminho de Maturidade</span>
-      <p class="rp2-subtitulo">${pc.p4_titulo}</p>
+      <p class="rp2-subtitulo">${rpPalavras(pc.p4_titulo)}</p>
 
       <div class="rp2-steps">${steps}</div>
 
@@ -213,11 +240,11 @@ function renderP6(pc, perfilInfo, nome) {
     <div class="rp-content">
       <span class="rp2-pill">Considerações Finais</span>
 
-      <p class="rp2-lembrese">A Matriz HEDRA não define quem você é — ela revela como você está liderando hoje.</p>
+      <p class="rp2-lembrese">${rpPalavras('A Matriz HEDRA não define quem você é — ela revela como você está liderando hoje.')}</p>
 
       <div class="rp2-carta">
         <p class="rp2-carta-saudacao" style="color:${perfilInfo.cor}">Caro(a) ${primeiroNome},</p>
-        ${pc.p5_texto.map(t => `<p class="rp2-carta-texto">${t}</p>`).join('')}
+        ${pc.p5_texto.map((t, i) => `<p class="rp2-carta-texto" style="--i:${i}">${t}</p>`).join('')}
       </div>
 
       <div class="rp2-fechamento">
@@ -250,6 +277,7 @@ function rpMostrarPagina(nova, direcao) {
   }
 
   window.scrollTo(0, 0);
+  rpContarNumeros(proxima);
 
   // Re-renderizar mapa ao navegar para a página 2
   if (nova === 2 && scoreData) {

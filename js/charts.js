@@ -51,11 +51,11 @@ function renderarMapaHEDRA(canvasId, eixoX, eixoY, perfil) {
 
   const svgStr = `<svg class="hedra-mapa" viewBox="0 0 ${VW} ${VH}" xmlns="http://www.w3.org/2000/svg">
   <image href="assets/slides/mapa-base.png" x="0" y="0" width="${VW}" height="${VH}"/>
-  <path transform="translate(${pinX - PIN / 2},${pinY - PIN}) scale(${PIN / 64})" fill-rule="evenodd" fill="${COR[perfil]}"
-    d="m32 0a24.0319 24.0319 0 0 0 -24 24c0 17.23 22.36 38.81 23.31 39.72a.99.99 0 0 0 1.38 0c.95-.91 23.31-22.49 23.31-39.72a24.0319 24.0319 0 0 0 -24-24zm0 35a11 11 0 1 1 11-11 11.0066 11.0066 0 0 1 -11 11z"/>
-  <image href="assets/slides/${perfil}/tag.png" x="${tagX}" y="${pinY - PIN}" width="${TAG_W}" height="${PIN}"/>
-  <text x="${pinX}" y="${pinY + 3.5 * MM}" text-anchor="middle" dominant-baseline="middle"
-    font-family="FinalSix,system-ui,sans-serif" font-weight="700" font-size="${9 * 0.3528 * MM}" fill="#651707">você está aqui</text>
+  <g class="mo-mapa-pin"><path transform="translate(${pinX - PIN / 2},${pinY - PIN}) scale(${PIN / 64})" fill-rule="evenodd" fill="${COR[perfil]}"
+    d="m32 0a24.0319 24.0319 0 0 0 -24 24c0 17.23 22.36 38.81 23.31 39.72a.99.99 0 0 0 1.38 0c.95-.91 23.31-22.49 23.31-39.72a24.0319 24.0319 0 0 0 -24-24zm0 35a11 11 0 1 1 11-11 11.0066 11.0066 0 0 1 -11 11z"/></g>
+  <g class="mo-mapa-tag"><image href="assets/slides/${perfil}/tag.png" x="${tagX}" y="${pinY - PIN}" width="${TAG_W}" height="${PIN}"/></g>
+  <g class="mo-mapa-label"><text x="${pinX}" y="${pinY + 3.5 * MM}" text-anchor="middle" dominant-baseline="middle"
+    font-family="FinalSix,system-ui,sans-serif" font-weight="700" font-size="${9 * 0.3528 * MM}" fill="#651707">você está aqui</text></g>
 </svg>`;
 
   container.insertAdjacentHTML('beforeend', svgStr);
