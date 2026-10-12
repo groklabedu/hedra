@@ -213,6 +213,28 @@
       padding: 4px 0;
     }
 
+    /* Termo LGPD */
+    .lgpd-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0 16px;
+    }
+    .lgpd-largo { grid-column: 1 / -1; }
+    .lgpd-ajuda { display: block; font-size: 0.78rem; color: #888; margin-top: 4px; }
+    .lgpd-rodape {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+    .lgpd-rodape .btn { width: auto; }
+    #lgpd-status { font-size: 0.85rem; color: #777; }
+    @media (max-width: 600px) {
+      .lgpd-grid { grid-template-columns: 1fr; }
+    }
+
     /* Login */
     #tela-login {
       max-width: 360px;
@@ -345,6 +367,38 @@
         </div>
       </div>
 
+      <!-- Termo de consentimento (LGPD) -->
+      <div class="card" style="margin-top:16px" id="card-lgpd">
+        <h3>Termo de consentimento (LGPD)</h3>
+        <p class="subtitulo" style="margin:6px 0 16px">Estas informações aparecem no termo que o participante aceita antes de iniciar o inventário. Ao salvar, o termo ganha uma nova versão, e cada resposta passa a registrar a versão que foi aceita.</p>
+
+        <div class="lgpd-grid">
+          <div class="campo-grupo">
+            <label for="lgpd_cnpj">CNPJ da Asséssor</label>
+            <input type="text" id="lgpd_cnpj" placeholder="00.000.000/0000-00">
+          </div>
+          <div class="campo-grupo">
+            <label for="lgpd_email">E-mail para assuntos de privacidade</label>
+            <input type="email" id="lgpd_email" placeholder="privacidade@exemplo.com.br">
+          </div>
+          <div class="campo-grupo lgpd-largo">
+            <label for="lgpd_compartilhamento">Compartilhamento dos resultados</label>
+            <textarea id="lgpd_compartilhamento" rows="3" placeholder="Ex.: Os resultados individuais não são compartilhados com a sua empresa sem a sua autorização."></textarea>
+            <span class="lgpd-ajuda">Frase completa. Aparece no item "Com quem compartilhamos".</span>
+          </div>
+          <div class="campo-grupo lgpd-largo">
+            <label for="lgpd_retencao">Prazo de guarda dos dados</label>
+            <input type="text" id="lgpd_retencao" placeholder="Ex.: por até 5 anos após a resposta">
+            <span class="lgpd-ajuda">No termo, aparece como "Por quanto tempo: [este texto], ou até que você solicite a exclusão."</span>
+          </div>
+        </div>
+
+        <div class="lgpd-rodape">
+          <span id="lgpd-status"></span>
+          <button class="btn btn-primario btn-sm" id="btn-salvar-lgpd">Salvar termo</button>
+        </div>
+      </div>
+
     </div>
   </div><!-- /tela-painel -->
 
@@ -357,6 +411,6 @@
   <script src="js/scoring.js?v=2"></script>
   <script src="js/resultado-content.js?v=2"></script>
   <script src="js/export.js?v=44"></script>
-  <script src="js/admin.js?v=7"></script>
+  <script src="js/admin.js?v=8"></script>
 </body>
 </html>

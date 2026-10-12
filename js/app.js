@@ -16,14 +16,58 @@ let secaoAtual = 1;
 let scoreData = null;
 let _pendingSlots = null; // { email, slots } quando o acesso é via slot liberado pelo admin
 let _testeInicio = null;  // timestamp (ms) de quando o teste foi iniciado
+let _consentimentoEm = null; // ISO de quando o participante aceitou o termo LGPD
 
 // ─── Utilitários ────────────────────────────────────────────────────────────
 
-function mostrarTela(id) {
-  document.querySelectorAll('.tela').forEach((t) => t.classList.remove('ativa'));
-  document.getElementById(id).classList.add('ativa');
-  window.scrollTo(0, 0);
+let CONSENTIMENTO_VERSAO = '1';
+
+async function carregarTermoLGPD() {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/configuracoes?chave=like.lgpd_*&select=chave,valor`, { headers: SB_HEADERS });
+    if (!res.ok) return;
+    const config = Object.fromEntries((await res.json()).map((r) => [r.chave, r.valor]));
+    document.querySelectorAll('[data-lgpd]').forEach((el) => {
+      const valor = (config[el.dataset.lgpd] || '').trim();
+      if (valor) el.textContent = valor;
+    });
+    if (config.lgpd_versao) CONSENTIMENTO_VERSAO = config.lgpd_versao;
+  } catch (err) {
+    console.error('Erro ao carregar termo LGPD:', err);
+  }
 }
+carregarTermoLGPD();
+
+const TELAS_COM_MORPH = ['tela-capa', 'tela-intro'];
+
+function mostrarTela(id) {
+  const atual = document.body.dataset.tela;
+  const trocar = () => {
+    if (atual === 'tela-capa') document.body.classList.add('capa-vista');
+    document.querySelectorAll('.tela').forEach((t) => t.classList.remove('ativa'));
+    document.getElementById(id).classList.add('ativa');
+    document.body.dataset.tela = id;
+    window.scrollTo(0, 0);
+  };
+
+  const morph = document.startViewTransition
+    && !window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    && TELAS_COM_MORPH.includes(atual) && TELAS_COM_MORPH.includes(id);
+
+  if (morph) document.startViewTransition(trocar).ready.catch(() => {});
+  else trocar();
+}
+
+// ─── Capa e introdução ──────────────────────────────────────────────────────
+
+document.getElementById('btn-capa-iniciar').addEventListener('click', () => mostrarTela('tela-intro'));
+document.getElementById('btn-intro-voltar').addEventListener('click', () => mostrarTela('tela-capa'));
+document.getElementById('btn-intro-continuar').addEventListener('click', () => mostrarTela('tela-identificacao'));
+document.getElementById('btn-dados-voltar').addEventListener('click', () => mostrarTela('tela-intro'));
+
+document.getElementById('campo-consentimento').addEventListener('change', () => {
+  document.getElementById('msg-consentimento').classList.add('oculto');
+});
 
 function atualizarProgressBar(respondidas) {
   const pct = Math.round((respondidas / TOTAL_PERGUNTAS) * 100);
@@ -53,6 +97,12 @@ document.getElementById('form-identificacao').addEventListener('submit', async (
     return;
   }
   document.getElementById('msg-campos-obrigatorios').classList.add('oculto');
+
+  if (!document.getElementById('campo-consentimento').checked) {
+    document.getElementById('msg-consentimento').classList.remove('oculto');
+    return;
+  }
+  _consentimentoEm = new Date().toISOString();
 
   const email = document.getElementById('campo-email').value.trim().toLowerCase();
 
@@ -164,6 +214,7 @@ function iniciarTeste(email, override) {
     estado:  document.getElementById('campo-estado').value.trim(),
     cidade:  document.getElementById('campo-cidade').value.trim(),
     override: !!override,
+    consentimento_em: _consentimentoEm,
   };
 
   secaoAtual = 1;
@@ -343,6 +394,8 @@ async function enviarDados() {
     resposta_aberta: respostaAberta,
     tempo_segundos:  _testeInicio ? Math.round((Date.now() - _testeInicio) / 1000) : null,
     respostas_q:     [...respostas],
+    consentimento_em:     userData.consentimento_em,
+    consentimento_versao: CONSENTIMENTO_VERSAO,
   };
 
   try {

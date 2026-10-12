@@ -31,6 +31,7 @@ document.getElementById('btn-login').addEventListener('click', () => {
   document.getElementById('tela-login').classList.add('oculto');
   document.getElementById('tela-painel').classList.remove('oculto');
   carregarDados();
+  carregarTermoLGPD();
 });
 
 document.getElementById('campo-senha').addEventListener('keydown', (e) => {
@@ -542,3 +543,48 @@ document.querySelectorAll('th[data-sort]').forEach((th) => {
 // ─── Atualizar dados ─────────────────────────────────────────────────────────
 
 document.getElementById('btn-atualizar').addEventListener('click', carregarDados);
+
+// ─── Termo de consentimento (LGPD) ───────────────────────────────────────────
+
+const LGPD_CAMPOS = ['lgpd_cnpj', 'lgpd_email', 'lgpd_compartilhamento', 'lgpd_retencao'];
+
+async function carregarTermoLGPD() {
+  const status = document.getElementById('lgpd-status');
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/configuracoes?chave=like.lgpd_*&select=chave,valor`, { headers: SB_HEADERS });
+    if (!res.ok) { status.textContent = 'Não foi possível carregar o termo.'; return; }
+    const config = Object.fromEntries((await res.json()).map((r) => [r.chave, r.valor]));
+    LGPD_CAMPOS.forEach((c) => { document.getElementById(c).value = config[c] || ''; });
+    status.textContent = config.lgpd_versao ? `Versão atual: ${config.lgpd_versao}` : 'Termo ainda não preenchido.';
+  } catch (err) {
+    status.textContent = 'Erro de conexão ao carregar o termo.';
+    console.error(err);
+  }
+}
+
+document.getElementById('btn-salvar-lgpd').addEventListener('click', async () => {
+  const btn = document.getElementById('btn-salvar-lgpd');
+  const status = document.getElementById('lgpd-status');
+  const agora = new Date();
+  const versao = `${agora.toLocaleDateString('pt-BR')} ${agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
+  const linhas = [
+    ...LGPD_CAMPOS.map((c) => ({ chave: c, valor: document.getElementById(c).value.trim() })),
+    { chave: 'lgpd_versao', valor: versao },
+  ].map((l) => ({ ...l, updated_at: agora.toISOString() }));
+
+  btn.disabled = true;
+  status.textContent = 'Salvando…';
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/configuracoes`, {
+      method: 'POST',
+      headers: { ...SB_HEADERS, 'Prefer': 'resolution=merge-duplicates,return=minimal' },
+      body: JSON.stringify(linhas),
+    });
+    status.textContent = res.ok ? `Salvo. Versão atual: ${versao}` : 'Erro ao salvar o termo.';
+  } catch (err) {
+    status.textContent = 'Erro de conexão ao salvar o termo.';
+    console.error(err);
+  } finally {
+    btn.disabled = false;
+  }
+});

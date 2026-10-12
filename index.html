@@ -7,17 +7,38 @@
   <meta property="og:title" content="Matriz HEDRA">
   <meta property="og:description" content="Matriz de Maturidade da Liderança">
   <title>Matriz HEDRA</title>
-  <link rel="stylesheet" href="css/style.css?v=17">
+  <link rel="stylesheet" href="css/style.css?v=20">
 </head>
-<body>
+<body data-tela="tela-capa">
 
   <header>
     <img src="assets/logo-horizontal.png" alt="Asséssor Consultoria" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'header-placeholder',textContent:'Asséssor Consultoria e Treinamento'}))">
   </header>
 
-  <!-- ════════════════════════════════════════════════════════ TELA 1 ════ -->
-  <div id="tela-identificacao" class="tela ativa">
-    <div class="container">
+  <!-- ═══════════════════════════════════════════════════════════ CAPA ════ -->
+  <div id="tela-capa" class="tela ativa">
+    <div class="capa">
+      <div class="capa-fundo" aria-hidden="true"></div>
+      <div class="capa-conteudo">
+        <img class="capa-logo" src="assets/logo-horizontal.png" alt="HEDRA">
+        <span class="capa-tag">Inventário de Liderança</span>
+        <h1 class="capa-titulo">
+          <span class="mo-w"><span style="--i:0">Matriz</span></span>
+          <span class="mo-w"><span style="--i:1">de</span></span>
+          <span class="mo-w"><span style="--i:2">maturidade</span></span>
+          <span class="mo-w"><span style="--i:3">da</span></span>
+          <span class="mo-w"><span style="--i:4">liderança</span></span>
+        </h1>
+        <span class="capa-linha"></span>
+        <button type="button" class="btn capa-btn" id="btn-capa-iniciar">Fazer o teste →</button>
+      </div>
+      <p class="capa-rodape">Asséssor Consultoria e Treinamento</p>
+    </div>
+  </div>
+
+  <!-- ═════════════════════════════════════════════════════ INTRODUÇÃO ════ -->
+  <div id="tela-intro" class="tela">
+    <div class="container container-estreito">
 
       <div class="intro-box">
         <span class="intro-badge">Inventário de Liderança</span>
@@ -30,6 +51,18 @@
         <p>Não responda pensando no que você sabe sobre liderança, no que considera correto ou no líder que gostaria de ser. Pense no que <strong>efetivamente aconteceu na sua rotina</strong>.</p>
         <p>Se ficar em dúvida entre duas notas, escolha aquela que melhor representa o que acontece <strong>na prática e com maior frequência</strong>.</p>
       </div>
+
+      <div class="nav-botoes">
+        <button type="button" class="btn btn-secundario" id="btn-intro-voltar">← Voltar</button>
+        <button type="button" class="btn btn-primario" id="btn-intro-continuar">Continuar →</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════ IDENTIFICAÇÃO ════ -->
+  <div id="tela-identificacao" class="tela">
+    <div class="container container-estreito">
 
       <div class="card">
         <h2>Suas informações</h2>
@@ -93,11 +126,38 @@
             </button>
           </div>
 
+          <div class="consentimento">
+            <details class="consent-termo">
+              <summary>Ler o Termo de Consentimento (LGPD)</summary>
+              <div class="consent-texto">
+                <p>Em conformidade com a Lei Geral de Proteção de Dados (Lei nº 13.709/2018), informamos como seus dados pessoais serão tratados neste inventário.</p>
+                <p><strong>Quem é responsável pelos dados (controlador):</strong> Asséssor Consultoria e Treinamento, CNPJ <span data-lgpd="lgpd_cnpj">[CNPJ]</span>. Contato para assuntos de privacidade: <span data-lgpd="lgpd_email">[e-mail de privacidade]</span>.</p>
+                <p><strong>Dados coletados:</strong> nome, e-mail, telefone, empresa, cargo, área, estado e cidade; suas respostas às 48 afirmações e à pergunta de reflexão; o resultado calculado (pontuações e perfil) e o tempo de resposta.</p>
+                <p><strong>Para que usamos:</strong> gerar e apresentar seu resultado; permitir que você consulte seu resultado novamente pelo e-mail informado; acompanhamento do seu desenvolvimento pela consultoria; e estatísticas internas, sempre de forma agregada.</p>
+                <p><strong>Com quem compartilhamos:</strong> os dados ficam armazenados em um serviço de banco de dados contratado pela consultoria, que atua apenas como operador. <span data-lgpd="lgpd_compartilhamento">[Informar se os resultados são compartilhados com a empresa contratante.]</span> Seus dados não são vendidos nem usados para publicidade.</p>
+                <p><strong>Por quanto tempo:</strong> <span data-lgpd="lgpd_retencao">[prazo de guarda]</span>, ou até que você solicite a exclusão.</p>
+                <p><strong>Seus direitos:</strong> você pode, a qualquer momento, solicitar acesso, correção, portabilidade ou exclusão dos seus dados, além de informações sobre o compartilhamento, pelo e-mail de privacidade acima. Você também pode revogar este consentimento a qualquer momento, sem prejuízo do tratamento já realizado.</p>
+                <p class="consent-versao">Versão: <span data-lgpd="lgpd_versao">1</span></p>
+              </div>
+            </details>
+
+            <label class="consent-check">
+              <input type="checkbox" id="campo-consentimento">
+              <span>Li e concordo com o Termo de Consentimento e autorizo o tratamento dos meus dados pessoais para as finalidades descritas.</span>
+            </label>
+          </div>
+
+          <div id="msg-consentimento" class="alerta alerta-erro oculto">
+            Para continuar, é preciso concordar com o Termo de Consentimento.
+          </div>
+
           <button type="submit" class="btn btn-primario" id="btn-iniciar" style="margin-top:8px">
             Iniciar inventário →
           </button>
         </form>
       </div>
+
+      <button type="button" class="btn-link" id="btn-dados-voltar">← Voltar</button>
 
     </div>
   </div>
@@ -196,7 +256,7 @@
   <script src="js/export.js?v=44"></script>
   <script src="js/resultado-content.js?v=2"></script>
   <script src="js/resultado.js?v=12"></script>
-  <script src="js/app.js?v=6"></script>
+  <script src="js/app.js?v=10"></script>
 
 </body>
 </html>
