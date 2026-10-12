@@ -11,6 +11,7 @@ const PERGUNTAS_POR_BLOCO = 12;
 
 let userData = {};
 let respostas = new Array(TOTAL_PERGUNTAS).fill(5);
+let respondidas = new Array(TOTAL_PERGUNTAS).fill(false); // pergunta tocada pelo participante
 let respostaAberta = '';
 let secaoAtual = 1;
 let scoreData = null;
@@ -249,6 +250,7 @@ function iniciarTeste(email, override) {
 
   secaoAtual = 1;
   respostas = new Array(TOTAL_PERGUNTAS).fill(5);
+  respondidas = new Array(TOTAL_PERGUNTAS).fill(false);
   _testeInicio = Date.now();
   mostrarTela('tela-teste', { antes: () => renderizarSecao(1) });
 }
@@ -271,7 +273,7 @@ function renderizarSecao(secao) {
     const i   = offset + idx;
     const val = respostas[i];
     const item = document.createElement('div');
-    item.className = 'pergunta-item';
+    item.className = respondidas[i] ? 'pergunta-item respondida' : 'pergunta-item';
     item.innerHTML = `
       <p class="pergunta-texto"><span class="pergunta-num">${p.id}.</span> ${p.texto}</p>
       <div class="slider-wrapper">
@@ -290,13 +292,21 @@ function renderizarSecao(secao) {
 
   container.querySelectorAll('.slider').forEach((input) => {
     const idx = parseInt(input.dataset.index);
+    const item = input.closest('.pergunta-item');
     input.addEventListener('input', () => {
       respostas[idx] = parseInt(input.value);
       document.getElementById('val-' + idx).textContent = input.value;
+      marcarRespondida(idx, item);
     });
+    // Tocar e soltar sem mudar o valor (ex.: manter o 5) também conta como resposta;
+    // pointerup não dispara quando o toque vira rolagem da página
+    input.addEventListener('pointerup', () => marcarRespondida(idx, item));
+    input.addEventListener('click', () => marcarRespondida(idx, item));
   });
 
-  atualizarProgressBar(offset);
+  esconderAvisoPendentes();
+  atualizarContador();
+
 
   document.getElementById('btn-avancar').textContent =
     secao < 4 ? 'Próxima parte →' : 'Continuar →';
@@ -310,6 +320,72 @@ function renderizarSecao(secao) {
 
   window.scrollTo(0, 0);
 }
+
+function indicesDaSecao() {
+  const offset = (secaoAtual - 1) * PERGUNTAS_POR_BLOCO;
+  return Array.from({ length: PERGUNTAS_POR_BLOCO }, (_, k) => offset + k);
+}
+
+function pendentesDaSecao() {
+  return secaoAtual <= 4 ? indicesDaSecao().filter((i) => !respondidas[i]) : [];
+}
+
+function itemDaPergunta(i) {
+  return document.getElementById('val-' + i)?.closest('.pergunta-item');
+}
+
+function marcarRespondida(i, item) {
+  if (respondidas[i]) return;
+  respondidas[i] = true;
+  item.classList.add('respondida');
+  item.classList.remove('pendente');
+  atualizarContador();
+}
+
+function atualizarContador() {
+  const el = document.getElementById('contador-respostas');
+  if (secaoAtual > 4) { el.classList.add('oculto'); return; }
+  const total = PERGUNTAS_POR_BLOCO;
+  const feitas = total - pendentesDaSecao().length;
+  atualizarProgressBar(respondidas.filter(Boolean).length);
+  el.classList.remove('oculto');
+  el.classList.toggle('completo', feitas === total);
+  el.textContent = feitas === total ? `✓ Todas as ${total} perguntas desta parte respondidas` : `${feitas} de ${total} perguntas respondidas nesta parte`;
+  if (feitas === total) esconderAvisoPendentes();
+}
+
+function mostrarAvisoPendentes(pendentes) {
+  const n = pendentes.length;
+  document.getElementById('aviso-pendentes-texto').textContent = n === 1
+    ? 'Falta 1 pergunta sem resposta nesta parte. Você pode respondê-la ou manter o valor 5 (às vezes).'
+    : `Faltam ${n} perguntas sem resposta nesta parte. Você pode respondê-las ou manter o valor 5 (às vezes).`;
+  pendentes.forEach((i) => itemDaPergunta(i)?.classList.add('pendente'));
+  document.getElementById('aviso-pendentes').classList.remove('oculto');
+}
+
+function esconderAvisoPendentes() {
+  document.getElementById('aviso-pendentes').classList.add('oculto');
+}
+
+document.getElementById('btn-ver-pendente').addEventListener('click', () => {
+  const item = itemDaPergunta(pendentesDaSecao()[0]);
+  if (!item) return;
+  item.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  item.classList.remove('pulsa');
+  void item.offsetWidth;
+  item.classList.add('pulsa');
+});
+
+document.getElementById('btn-manter-5').addEventListener('click', () => {
+  pendentesDaSecao().forEach((i) => {
+    respondidas[i] = true;
+    const item = itemDaPergunta(i);
+    item?.classList.remove('pendente');
+    item?.classList.add('respondida');
+  });
+  esconderAvisoPendentes();
+  avancarSecao();
+});
 
 function atualizarBotaoVoltar() {
   const btn = document.getElementById('btn-voltar');
@@ -328,8 +404,13 @@ function trocarSecao(frente, renderizar, extras = []) {
   else animarSaida([...extras, header, perguntas], frente, exibir);
 }
 
-document.getElementById('btn-avancar').addEventListener('click', () => {
+function avancarSecao() {
   if (_trocaPendente) return;
+  const pendentes = pendentesDaSecao();
+  if (pendentes.length) {
+    mostrarAvisoPendentes(pendentes);
+    return;
+  }
   if (secaoAtual < 4) {
     secaoAtual++;
     trocarSecao(true, () => renderizarSecao(secaoAtual));
@@ -339,7 +420,9 @@ document.getElementById('btn-avancar').addEventListener('click', () => {
   } else if (secaoAtual === 5) {
     finalizarTeste();
   }
-});
+}
+
+document.getElementById('btn-avancar').addEventListener('click', avancarSecao);
 
 document.getElementById('btn-voltar').addEventListener('click', () => {
   if (_trocaPendente) return;
@@ -356,6 +439,8 @@ document.getElementById('btn-voltar').addEventListener('click', () => {
 
 function mostrarPerguntaAberta() {
   document.querySelector('#tela-teste .instrucao-box').classList.add('oculto');
+  esconderAvisoPendentes();
+  atualizarContador();
   atualizarProgressBar(TOTAL_PERGUNTAS);
   document.getElementById('secao-titulo').textContent = 'Reflexão final';
   document.getElementById('secao-descricao').textContent = '';
@@ -544,6 +629,7 @@ function renderizarResultado(scores) {
 
     secaoAtual = 1;
     respostas = new Array(TOTAL_PERGUNTAS).fill(5);
+    respondidas = new Array(TOTAL_PERGUNTAS).fill(false);
     _testeInicio = Date.now();
     renderizarSecao(1);
     mostrarTela('tela-teste', { semAnimacao: true });

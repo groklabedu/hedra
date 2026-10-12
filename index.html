@@ -7,7 +7,7 @@
   <meta property="og:title" content="Matriz HEDRA">
   <meta property="og:description" content="Matriz de Maturidade da Liderança">
   <title>Matriz HEDRA</title>
-  <link rel="stylesheet" href="css/style.css?v=24">
+  <link rel="stylesheet" href="css/style.css?v=25">
 </head>
 <body data-tela="tela-capa">
 
@@ -202,6 +202,16 @@
       <!-- Perguntas (renderizadas pelo JS) -->
       <div id="perguntas-container"></div>
 
+      <p class="contador-respostas" id="contador-respostas" aria-live="polite"></p>
+
+      <div class="aviso-pendentes oculto" id="aviso-pendentes" role="alert">
+        <p id="aviso-pendentes-texto"></p>
+        <div class="aviso-botoes">
+          <button type="button" class="btn btn-secundario" id="btn-ver-pendente">Ver pergunta</button>
+          <button type="button" class="btn btn-primario" id="btn-manter-5">Manter 5 e continuar</button>
+        </div>
+      </div>
+
       <div class="nav-botoes">
         <button class="btn btn-secundario" id="btn-voltar" style="display:none">
           ← Voltar
@@ -256,7 +266,7 @@
   <script src="js/export.js?v=44"></script>
   <script src="js/resultado-content.js?v=2"></script>
   <script src="js/resultado.js?v=13"></script>
-  <script src="js/app.js?v=12"></script>
+  <script src="js/app.js?v=14"></script>
 
 </body>
 </html>
