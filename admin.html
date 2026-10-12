@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Painel Admin — HEDRA</title>
+  <title>Painel do Administrador — HEDRA</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..24,400..600,0..1,0&display=block">
   <link rel="stylesheet" href="css/style.css">
   <style>
     /* ── Admin-specific ─────────────────────────────────────────────────── */
@@ -24,44 +25,56 @@
       .painel-grid { grid-template-columns: 1fr; }
     }
 
-    .stat-card {
+    .ultima-atualizacao { font-size: 0.8rem; color: #999; font-variant-numeric: tabular-nums; }
+
+    /* Abas */
+    .abas {
+      display: flex;
+      gap: 4px;
+      border-bottom: 1px solid var(--cor-borda);
+      margin-bottom: 16px;
+    }
+    .aba {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 16px;
+      background: none;
+      border: none;
+      border-bottom: 3px solid transparent;
+      margin-bottom: -1px;
+      font: inherit;
+      font-size: 0.92rem;
+      font-weight: 700;
+      color: #8a7b72;
+      cursor: pointer;
+    }
+    .aba:hover { color: var(--cor-principal); }
+    .aba.ativa { color: var(--cor-principal); border-bottom-color: var(--cor-principal); }
+    .aba .material-symbols-rounded { font-size: 20px; }
+
+    /* Indicadores */
+    .kpis {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    .kpi {
       background: #fff;
       border: 1px solid var(--cor-borda);
       border-radius: var(--raio);
-      padding: 20px;
-      text-align: center;
+      padding: 16px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 0;
     }
-
-    .stat-numero {
-      font-size: 2.4rem;
-      font-weight: 800;
-      color: var(--cor-principal);
-      line-height: 1;
-    }
-
-    .stat-label {
-      font-size: 0.8rem;
-      color: #777;
-      margin-top: 4px;
-    }
-
-    .perfis-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-      margin-top: 12px;
-    }
-
-    .perfil-count {
-      background: #fff;
-      border: 1px solid var(--cor-borda);
-      border-radius: 8px;
-      padding: 10px;
-      text-align: center;
-    }
-
-    .perfil-count .p-num { font-size: 1.4rem; font-weight: 800; }
-    .perfil-count .p-nome { font-size: 0.72rem; color: #666; line-height: 1.3; }
+    .kpi-rotulo { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: #888; }
+    .kpi-valor { font-size: 2rem; font-weight: 800; line-height: 1.1; color: var(--cor-principal); font-variant-numeric: tabular-nums; }
+    .kpi-perfil { font-size: 1.15rem; line-height: 1.25; padding-top: 6px; }
+    .kpi-nota { font-size: 0.8rem; color: #888; }
+    @media (max-width: 900px) { .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 
     /* Tabela */
     .tabela-wrapper {
@@ -73,7 +86,7 @@
       width: 100%;
       border-collapse: collapse;
       font-size: 0.85rem;
-      min-width: 700px;
+      min-width: 640px;
     }
 
     thead { background: var(--cor-principal); color: #fff; }
@@ -92,15 +105,6 @@
       white-space: nowrap;
     }
 
-    .resposta-aberta {
-      max-width: 200px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      font-size: 0.8rem;
-      color: #666;
-    }
-
     /* Checkbox de seleção */
     .col-check { width: 36px; text-align: center !important; }
     .col-check input[type="checkbox"] {
@@ -108,47 +112,57 @@
     }
     thead .col-check input[type="checkbox"] { accent-color: #fff; }
 
-    /* Badge de slots */
-    .col-tempo { width: 60px; text-align: center !important; white-space: nowrap; font-variant-numeric: tabular-nums; }
-    .col-slots { width: 52px; text-align: center !important; }
-    .badge-slots {
-      display: inline-block;
-      padding: 2px 8px;
-      border-radius: 20px;
-      font-size: 0.78rem;
-      font-weight: 700;
-      color: #aaa;
-    }
-    .badge-slots-ativo {
-      background: #edfaed;
-      color: #1ca31c;
-      border: 1px solid #1ca31c40;
-    }
-
     /* Botões de ação */
-    .col-acoes { width: 96px; text-align: center !important; white-space: nowrap; }
-    .btn-lixeira, .btn-liberar, .btn-pdf {
-      background: none;
-      border: none;
-      cursor: pointer;
-      padding: 4px 6px;
-      border-radius: 6px;
-      font-size: 1rem;
+    .col-acoes { width: 176px; text-align: right !important; white-space: nowrap; }
+    .material-symbols-rounded {
+      font-variation-settings: 'FILL' 0, 'wght' 450, 'GRAD' 0, 'opsz' 20;
+      font-size: 20px;
       line-height: 1;
+      user-select: none;
+    }
+    .btn-com-icone { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+    .btn-com-icone .material-symbols-rounded { font-size: 18px; }
+    .acoes-linha { display: inline-flex; align-items: center; gap: 2px; }
+    .btn-acao {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      min-width: 32px;
+      height: 32px;
+      padding: 0 6px;
+      border: none;
+      border-radius: 8px;
+      background: none;
+      color: #8a7b72;
+      cursor: pointer;
       transition: color 0.15s, background 0.15s;
     }
-    .btn-lixeira { color: #bbb; }
-    .btn-lixeira:hover { color: #CC2200; background: #FFF0EE; }
-    .btn-liberar { color: #aaa; font-weight: 700; }
-    .btn-liberar:hover { color: #1ca31c; background: #edfaed; }
-    .btn-pdf { color: #aaa; font-size: 0.85rem; }
-    .btn-pdf:hover { color: #651707; background: #fdf0e8; }
-    .btn-pdf2 { color: #aaa; font-size: 1rem; }
-    .btn-pdf2:hover { color: #651707; background: #fdf0e8; }
-    .btn-pdf.gerando { opacity: 0.5; pointer-events: none; }
-    .btn-detalhes { color: #aaa; font-size: 1.1rem; font-weight: 700; }
-    .btn-detalhes:hover, .btn-detalhes.ativo { color: #651707; background: #fdf0e8; }
-    .tr-detalhes td { border-top: none !important; }
+    .btn-acao:hover { color: var(--cor-principal); background: #f6ece3; }
+    .btn-acao.btn-lixeira:hover { color: #CC2200; background: #FFF0EE; }
+    .btn-acao.btn-liberar:hover { color: #1ca31c; background: #edfaed; }
+    .btn-acao.gerando { opacity: 0.6; pointer-events: none; }
+    .btn-acao.gerando .material-symbols-rounded { animation: girar 1s linear infinite; }
+    @keyframes girar { to { transform: rotate(360deg); } }
+    .btn-detalhes {
+      margin-left: 6px;
+      position: relative;
+      background: #f3e9df;
+      color: var(--cor-principal);
+    }
+    .btn-detalhes::before {
+      content: '';
+      position: absolute;
+      left: -5px;
+      top: 6px;
+      bottom: 6px;
+      width: 1px;
+      background: var(--cor-borda);
+    }
+    .btn-detalhes:hover { background: #ead8c8; }
+    .btn-detalhes .material-symbols-rounded { transition: transform 0.2s; }
+    .linha-registro.aberta .btn-detalhes { background: var(--cor-principal); color: #fff; }
+    .linha-registro.aberta .btn-detalhes .material-symbols-rounded { transform: rotate(180deg); }
 
     /* Barra de ações em massa */
     #barra-selecao {
@@ -163,8 +177,11 @@
       font-size: 0.9rem;
     }
     #barra-selecao.visivel { display: flex; }
-    #barra-selecao span { flex: 1; color: #555; }
+    #texto-selecao { flex: 1; color: #555; }
     #btn-excluir-selecionados {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
       background: #CC2200;
       color: #fff;
       border: none;
@@ -188,7 +205,7 @@
 
     /* Cabeçalhos ordenáveis */
     th[data-sort]:hover { background: #4a1005; }
-    .sort-ico { opacity: 0.7; font-size: 0.75em; }
+    .sort-ico { opacity: 0.75; font-size: 16px; vertical-align: -3px; margin-left: 2px; }
 
     /* Filtros */
     .filtros-wrapper {
@@ -235,6 +252,201 @@
       .lgpd-grid { grid-template-columns: 1fr; }
     }
 
+    /* Linhas da tabela */
+    .col-data { width: 92px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+    .col-perfil { width: 1%; white-space: nowrap; }
+    .cel-principal { display: block; font-weight: 600; color: #222; }
+    .cel-secundaria { display: block; font-size: 0.78rem; color: #888; margin-top: 2px; overflow-wrap: anywhere; }
+    .linha-registro { cursor: pointer; }
+    .linha-registro:focus-visible { outline: 2px solid var(--cor-principal); outline-offset: -2px; }
+    .linha-registro.aberta { background: #F6EDE4 !important; }
+    .slots-badge {
+      display: inline-block;
+      margin-left: 3px;
+      padding: 0 6px;
+      border-radius: 10px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      background: #edfaed;
+      color: #1ca31c;
+      border: 1px solid #1ca31c40;
+      vertical-align: middle;
+    }
+
+    /* Painel de detalhes */
+    .tr-detalhes > td {
+      background: #FCF8F2;
+      padding: 16px 20px 20px !important;
+      border-bottom: 2px solid var(--cor-borda);
+      cursor: default;
+    }
+    .det-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 12px 24px;
+    }
+    .det-campo { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+    .det-rotulo { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: #999; }
+    .det-valor { font-size: 0.88rem; color: #222; word-break: break-word; }
+    .det-dimensoes { margin-top: 18px; }
+    .dim-lista {
+      margin-top: 8px;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px 32px;
+      max-width: 820px;
+    }
+    .dim-linha {
+      display: grid;
+      grid-template-columns: 96px minmax(0, 1fr) 44px;
+      align-items: center;
+      gap: 10px;
+    }
+    .dim-nome { font-size: 0.85rem; font-weight: 600; color: #333; }
+    .dim-trilho { height: 10px; background: #EFE4D8; border-radius: 5px; overflow: hidden; }
+    .dim-barra { display: block; height: 100%; border-radius: 5px; transition: width 0.6s cubic-bezier(.22, 1, .36, 1); }
+    .dim-valor { text-align: right; font-weight: 800; font-size: 0.9rem; font-variant-numeric: tabular-nums; }
+    @media (max-width: 700px) { .dim-lista { grid-template-columns: 1fr; } }
+    .det-reflexao { margin-top: 16px; }
+    .det-reflexao p { margin-top: 4px; font-size: 0.9rem; line-height: 1.6; white-space: pre-wrap; }
+    .det-respostas { margin-top: 16px; }
+    .det-respostas summary { cursor: pointer; font-weight: 700; font-size: 0.85rem; color: var(--cor-principal); }
+    .det-partes { margin-top: 12px; columns: 2; column-gap: 24px; }
+    .det-parte { break-inside: avoid; margin-bottom: 12px; }
+    .det-parte-titulo { font-size: 0.72rem; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 4px; }
+    .det-parte table { min-width: 0; font-size: inherit; }
+    .det-parte td { padding: 4px 8px; border: none; }
+    .det-q-num { color: #888; font-size: 0.78rem; white-space: nowrap; }
+    .det-q-texto { font-size: 0.82rem; line-height: 1.4; }
+    .det-q-val { text-align: center; font-weight: 700; white-space: nowrap; }
+    .det-inv { color: #aaa; font-size: 0.7em; }
+    .det-mantida { display: inline-block; margin-left: 4px; padding: 0 6px; border-radius: 8px; font-size: 0.68rem; font-weight: 700; background: #FFF1E0; color: #B26200; }
+
+    /* Unidades de negócio */
+    .lista-unidades { list-style: none; margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
+    .lista-unidades li {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) 28px;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.85rem;
+    }
+    .un-nome { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .un-barra { height: 8px; background: #F0E8E0; border-radius: 4px; overflow: hidden; }
+    .un-barra span { display: block; height: 100%; background: var(--cor-principal); border-radius: 4px; }
+    .un-total { text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .btn-ver-todas {
+      margin-top: 12px;
+      background: none;
+      border: none;
+      padding: 4px 0;
+      font: inherit;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--cor-principal);
+      cursor: pointer;
+    }
+
+    /* Celular: cada registro vira um card */
+    @media (max-width: 700px) {
+      .tabela-wrapper { overflow-x: visible; }
+      table { min-width: 0; }
+      thead { display: none; }
+      tbody, tbody tr, tbody td { display: block; }
+      tbody tr.linha-registro {
+        display: grid;
+        grid-template-columns: 28px 1fr auto;
+        grid-template-areas:
+          "check part data"
+          "check emp emp"
+          "check perfil perfil"
+          "check acoes acoes";
+        gap: 4px 8px;
+        padding: 12px 8px;
+        border-bottom: 1px solid var(--cor-borda);
+      }
+      tbody tr.linha-registro td { border: none; padding: 0; }
+      .linha-registro .col-check { grid-area: check; width: auto; }
+      .linha-registro .col-participante { grid-area: part; }
+      .linha-registro .col-data { grid-area: data; width: auto; font-size: 0.78rem; color: #888; }
+      .linha-registro .col-empresa { grid-area: emp; }
+      .linha-registro .col-perfil { grid-area: perfil; width: auto; margin-top: 4px; }
+      .linha-registro .col-acoes { grid-area: acoes; width: auto; text-align: left !important; margin-top: 4px; }
+      .tr-detalhes > td { display: block; }
+      .det-partes { columns: 1; }
+    }
+
+    /* Filtros gerais */
+    .filtros-painel {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      gap: 12px 20px;
+      margin: 0 0 16px;
+      padding: 14px 18px;
+    }
+    .filtro-campo { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+    .filtro-campo label { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #888; }
+    .filtro-campo select, .filtro-campo input { padding: 8px 10px; font-size: 0.9rem; min-width: 170px; }
+    .filtro-datas { flex-direction: row; align-items: center; gap: 8px; }
+    .filtro-datas label { text-transform: none; letter-spacing: 0; font-size: 0.85rem; font-weight: 600; color: #555; }
+    .filtro-datas input { min-width: 0; }
+    .filtro-teste { display: flex; align-items: center; gap: 8px; font-size: 0.88rem; cursor: pointer; padding-bottom: 8px; }
+    .filtro-teste input { width: 18px; height: 18px; accent-color: var(--cor-principal); }
+    .filtro-resumo { margin-left: auto; font-size: 0.85rem; color: #777; padding-bottom: 8px; font-variant-numeric: tabular-nums; }
+
+    /* Registros de teste */
+    .tag-teste {
+      display: inline-block;
+      margin-left: 6px;
+      padding: 1px 7px;
+      border-radius: 10px;
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      background: #EFE9F7;
+      color: #6a4fa0;
+      vertical-align: middle;
+    }
+    .linha-registro.e-teste .cel-principal,
+    .linha-registro.e-teste .col-data { color: #999; }
+    .det-acoes { display: flex; justify-content: flex-end; margin-bottom: 12px; }
+    .btn-marcar-teste {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid var(--cor-borda);
+      background: #fff;
+      color: #555;
+      border-radius: 8px;
+      padding: 6px 12px;
+      font: inherit;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-marcar-teste:hover { border-color: #6a4fa0; color: #6a4fa0; }
+    .btn-marcar-teste .material-symbols-rounded { font-size: 18px; }
+    #btn-marcar-teste-selecionados {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #fff;
+      border: 1px solid #6a4fa066;
+      color: #6a4fa0;
+      border-radius: 6px;
+      padding: 7px 12px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    #btn-marcar-teste-selecionados .material-symbols-rounded { font-size: 18px; }
+    @media (max-width: 700px) {
+      .filtro-campo, .filtro-campo select { width: 100%; }
+      .filtro-resumo { margin-left: 0; }
+    }
+
     /* Login */
     #tela-login {
       max-width: 360px;
@@ -269,42 +481,72 @@
     <div class="admin-container">
 
       <div style="display:flex;align-items:center;justify-content:space-between;margin:20px 0 16px;flex-wrap:wrap;gap:10px">
-        <h1 style="font-size:1.2rem">Painel de Resultados — HEDRA</h1>
-        <div style="display:flex;gap:8px">
-          <button class="btn btn-secundario btn-sm" id="btn-atualizar">↺ Atualizar</button>
-          <button class="btn btn-dourado btn-sm" id="btn-exportar-csv">Exportar CSV</button>
+        <h1 style="font-size:1.2rem">Painel do Administrador — HEDRA</h1>
+        <div style="display:flex;gap:12px;align-items:center">
+          <span class="ultima-atualizacao" id="ultima-atualizacao" aria-live="polite"></span>
+          <button class="btn btn-dourado btn-sm btn-com-icone" id="btn-exportar-csv"><span class="material-symbols-rounded" aria-hidden="true">download</span>Exportar CSV</button>
         </div>
+      </div>
+
+      <div class="abas" role="tablist" aria-label="Seções do painel">
+        <button type="button" class="aba ativa" role="tab" aria-selected="true" aria-controls="aba-resultados" data-aba="aba-resultados"><span class="material-symbols-rounded" aria-hidden="true">insights</span>Resultados</button>
+        <button type="button" class="aba" role="tab" aria-selected="false" aria-controls="aba-lgpd" data-aba="aba-lgpd"><span class="material-symbols-rounded" aria-hidden="true">policy</span>Termo LGPD</button>
       </div>
 
       <span id="status-carregando"></span>
 
-      <!-- Cards de resumo -->
-      <div class="painel-grid">
-        <div class="stat-card">
-          <div class="stat-numero" id="total-participantes">—</div>
-          <div class="stat-label">Total de participantes</div>
-        </div>
+      <section id="aba-resultados" role="tabpanel">
 
-        <div class="stat-card">
-          <h3 style="font-size:0.8rem;color:#888;margin-bottom:10px">Por perfil</h3>
-          <div class="perfis-grid">
-            <div class="perfil-count">
-              <div class="p-num" style="color:#f8572d" id="count-operador">0</div>
-              <div class="p-nome">Operador Sobrecarregado</div>
-            </div>
-            <div class="perfil-count">
-              <div class="p-num" style="color:#1ca31c" id="count-executor">0</div>
-              <div class="p-nome">Executor Eficiente</div>
-            </div>
-            <div class="perfil-count">
-              <div class="p-num" style="color:#8631f4" id="count-comunicador">0</div>
-              <div class="p-nome">Comunicador Frágil</div>
-            </div>
-            <div class="perfil-count">
-              <div class="p-num" style="color:#ffab24" id="count-lider">0</div>
-              <div class="p-nome">Líder de Influência</div>
-            </div>
-          </div>
+      <!-- Filtros gerais: valem para os números, o gráfico e a tabela -->
+      <div class="card filtros-painel">
+        <div class="filtro-campo">
+          <label for="filtro-periodo">Período</label>
+          <select id="filtro-periodo">
+            <option value="todos">Todo o período</option>
+            <option value="7">Últimos 7 dias</option>
+            <option value="30">Últimos 30 dias</option>
+            <option value="90">Últimos 90 dias</option>
+            <option value="personalizado">Personalizado…</option>
+          </select>
+        </div>
+        <div class="filtro-campo filtro-datas oculto" id="filtro-datas">
+          <label for="filtro-de">De</label>
+          <input type="date" id="filtro-de">
+          <label for="filtro-ate">até</label>
+          <input type="date" id="filtro-ate">
+        </div>
+        <div class="filtro-campo">
+          <label for="filtro-unidade">Unidade de negócio</label>
+          <select id="filtro-unidade"><option value="">Todas as unidades</option></select>
+        </div>
+        <label class="filtro-teste">
+          <input type="checkbox" id="filtro-mostrar-teste">
+          Mostrar registros de teste
+        </label>
+        <span class="filtro-resumo" id="filtro-resumo"></span>
+      </div>
+
+      <!-- Indicadores -->
+      <div class="kpis">
+        <div class="kpi">
+          <span class="kpi-rotulo">Participantes</span>
+          <span class="kpi-valor" id="kpi-total">—</span>
+          <span class="kpi-nota" id="kpi-total-nota"></span>
+        </div>
+        <div class="kpi">
+          <span class="kpi-rotulo">Últimos 30 dias</span>
+          <span class="kpi-valor" id="kpi-30">—</span>
+          <span class="kpi-nota" id="kpi-30-nota"></span>
+        </div>
+        <div class="kpi">
+          <span class="kpi-rotulo">Tempo médio de resposta</span>
+          <span class="kpi-valor" id="kpi-tempo">—</span>
+          <span class="kpi-nota" id="kpi-tempo-nota"></span>
+        </div>
+        <div class="kpi">
+          <span class="kpi-rotulo">Perfil mais frequente</span>
+          <span class="kpi-valor kpi-perfil" id="kpi-perfil">—</span>
+          <span class="kpi-nota" id="kpi-perfil-nota"></span>
         </div>
       </div>
 
@@ -318,7 +560,8 @@
         </div>
         <div class="card" style="margin-top:0">
           <h3>Por unidade de negócio</h3>
-          <ul id="lista-unidades" style="list-style:none;margin-top:10px;font-size:0.9rem;line-height:2"></ul>
+          <ul id="lista-unidades" class="lista-unidades"></ul>
+          <button type="button" class="btn-ver-todas oculto" id="btn-ver-unidades"></button>
         </div>
       </div>
 
@@ -339,7 +582,8 @@
         <div id="barra-selecao">
           <span id="texto-selecao">0 registros selecionados</span>
           <button id="btn-cancelar-selecao">Cancelar</button>
-          <button id="btn-excluir-selecionados">🗑 Excluir selecionados</button>
+          <button id="btn-marcar-teste-selecionados" class="btn-com-icone"><span class="material-symbols-rounded" aria-hidden="true">science</span>Marcar como teste</button>
+          <button id="btn-excluir-selecionados" class="btn-com-icone"><span class="material-symbols-rounded" aria-hidden="true">delete</span>Excluir selecionados</button>
         </div>
 
         <div class="tabela-wrapper">
@@ -347,28 +591,25 @@
             <thead>
               <tr>
                 <th class="col-check"><input type="checkbox" id="check-todos" title="Selecionar todos"></th>
-                <th data-sort="data">Data<span class="sort-ico"> ▼</span></th>
-                <th data-sort="nome">Nome<span class="sort-ico"> ↕</span></th>
-                <th data-sort="email">E-mail<span class="sort-ico"> ↕</span></th>
-                <th>Cargo</th>
-                <th>Unidade</th>
+                <th data-sort="data" class="col-data">Data<span class="sort-ico material-symbols-rounded" aria-hidden="true">arrow_downward</span></th>
+                <th data-sort="nome">Participante<span class="sort-ico material-symbols-rounded" aria-hidden="true">unfold_more</span></th>
+                <th>Empresa e cargo</th>
                 <th>Perfil</th>
-                <th>X / Y</th>
-                <th>Reflexão</th>
-                <th class="col-tempo">Tempo</th>
-                <th class="col-slots">Slots</th>
                 <th class="col-acoes">Ações</th>
               </tr>
             </thead>
             <tbody id="tabela-corpo">
-              <tr><td colspan="11" style="text-align:center;padding:20px;color:#aaa">Aguardando dados…</td></tr>
+              <tr><td colspan="6" style="text-align:center;padding:20px;color:#aaa">Aguardando dados…</td></tr>
             </tbody>
           </table>
         </div>
       </div>
 
+      </section>
+
+      <section id="aba-lgpd" role="tabpanel" class="oculto">
       <!-- Termo de consentimento (LGPD) -->
-      <div class="card" style="margin-top:16px" id="card-lgpd">
+      <div class="card" style="margin-top:0" id="card-lgpd">
         <h3>Termo de consentimento (LGPD)</h3>
         <p class="subtitulo" style="margin:6px 0 16px">Estas informações aparecem no termo que o participante aceita antes de iniciar o inventário. Ao salvar, o termo ganha uma nova versão, e cada resposta passa a registrar a versão que foi aceita.</p>
 
@@ -398,6 +639,7 @@
           <button class="btn btn-primario btn-sm" id="btn-salvar-lgpd">Salvar termo</button>
         </div>
       </div>
+      </section>
 
     </div>
   </div><!-- /tela-painel -->
@@ -411,6 +653,6 @@
   <script src="js/scoring.js?v=2"></script>
   <script src="js/resultado-content.js?v=2"></script>
   <script src="js/export.js?v=44"></script>
-  <script src="js/admin.js?v=8"></script>
+  <script src="js/admin.js?v=16"></script>
 </body>
 </html>

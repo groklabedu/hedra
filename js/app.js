@@ -12,6 +12,7 @@ const PERGUNTAS_POR_BLOCO = 12;
 let userData = {};
 let respostas = new Array(TOTAL_PERGUNTAS).fill(5);
 let respondidas = new Array(TOTAL_PERGUNTAS).fill(false); // pergunta tocada pelo participante
+let mantidas = new Set(); // índices confirmados em 5 pelo botão "Manter 5 e continuar"
 let respostaAberta = '';
 let secaoAtual = 1;
 let scoreData = null;
@@ -251,6 +252,7 @@ function iniciarTeste(email, override) {
   secaoAtual = 1;
   respostas = new Array(TOTAL_PERGUNTAS).fill(5);
   respondidas = new Array(TOTAL_PERGUNTAS).fill(false);
+  mantidas = new Set();
   _testeInicio = Date.now();
   mostrarTela('tela-teste', { antes: () => renderizarSecao(1) });
 }
@@ -296,12 +298,12 @@ function renderizarSecao(secao) {
     input.addEventListener('input', () => {
       respostas[idx] = parseInt(input.value);
       document.getElementById('val-' + idx).textContent = input.value;
-      marcarRespondida(idx, item);
+      registrarInteracao(idx, item);
     });
     // Tocar e soltar sem mudar o valor (ex.: manter o 5) também conta como resposta;
     // pointerup não dispara quando o toque vira rolagem da página
-    input.addEventListener('pointerup', () => marcarRespondida(idx, item));
-    input.addEventListener('click', () => marcarRespondida(idx, item));
+    input.addEventListener('pointerup', () => registrarInteracao(idx, item));
+    input.addEventListener('click', () => registrarInteracao(idx, item));
   });
 
   esconderAvisoPendentes();
@@ -332,6 +334,11 @@ function pendentesDaSecao() {
 
 function itemDaPergunta(i) {
   return document.getElementById('val-' + i)?.closest('.pergunta-item');
+}
+
+function registrarInteracao(i, item) {
+  mantidas.delete(i);
+  marcarRespondida(i, item);
 }
 
 function marcarRespondida(i, item) {
@@ -379,6 +386,7 @@ document.getElementById('btn-ver-pendente').addEventListener('click', () => {
 document.getElementById('btn-manter-5').addEventListener('click', () => {
   pendentesDaSecao().forEach((i) => {
     respondidas[i] = true;
+    mantidas.add(i);
     const item = itemDaPergunta(i);
     item?.classList.remove('pendente');
     item?.classList.add('respondida');
@@ -521,6 +529,7 @@ async function enviarDados() {
     resposta_aberta: respostaAberta,
     tempo_segundos:  _testeInicio ? Math.round((Date.now() - _testeInicio) / 1000) : null,
     respostas_q:     [...respostas],
+    respostas_mantidas: [...mantidas].sort((a, b) => a - b).map((i) => i + 1),
     consentimento_em:     userData.consentimento_em,
     consentimento_versao: CONSENTIMENTO_VERSAO,
   };
@@ -630,6 +639,7 @@ function renderizarResultado(scores) {
     secaoAtual = 1;
     respostas = new Array(TOTAL_PERGUNTAS).fill(5);
     respondidas = new Array(TOTAL_PERGUNTAS).fill(false);
+    mantidas = new Set();
     _testeInicio = Date.now();
     renderizarSecao(1);
     mostrarTela('tela-teste', { semAnimacao: true });

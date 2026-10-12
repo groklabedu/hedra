@@ -12,6 +12,26 @@ let slotsAdmin = {}; // { email: slots }
 let chartPizzaAdmin = null;
 let sortCol = 'data';
 let sortDir = 'desc'; // 'asc' | 'desc'
+let listaTabela = []; // registros exibidos na tabela (base + busca + perfil)
+
+function esc(v) {
+  return String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+const PARTICULAS_NOME = ['de', 'da', 'do', 'das', 'dos', 'e', 'di', 'du', 'del', 'van', 'von'];
+
+// Só ajusta nomes digitados todo em maiúsculas ou todo em minúsculas
+function nomeExibicao(nome) {
+  const t = String(nome ?? '').replace(/\s+/g, ' ').trim();
+  if (!/\p{L}/u.test(t) || (t !== t.toUpperCase() && t !== t.toLowerCase())) return t;
+  return t.toLowerCase().split(' ').map((p, i) =>
+    i > 0 && PARTICULAS_NOME.includes(p) ? p : p.replace(/(^|[-'])(\p{L})/gu, (_, sep, l) => sep + l.toUpperCase())
+  ).join(' ');
+}
+
+function icone(nome) {
+  return `<span class="material-symbols-rounded" aria-hidden="true">${nome}</span>`;
+}
 
 function formatarTempo(seg) {
   if (seg == null || isNaN(seg)) return '—';
@@ -40,9 +60,16 @@ document.getElementById('campo-senha').addEventListener('keydown', (e) => {
 
 // ─── Carregar dados ──────────────────────────────────────────────────────────
 
-async function carregarDados() {
+const INTERVALO_MIN_ATUALIZACAO = 30 * 1000;
+let ultimaCarga = 0;
+
+async function carregarDados({ silencioso = false } = {}) {
   const status = document.getElementById('status-carregando');
-  status.textContent = 'Carregando dados…';
+  if (!silencioso) status.textContent = 'Carregando dados…';
+
+  // Preserva o que estava aberto/selecionado para a atualização não atrapalhar
+  const abertos = [...document.querySelectorAll('tr.linha-registro.aberta')].map((tr) => tr.dataset.id);
+  const selecionados = [...document.querySelectorAll('.check-linha:checked')].map((cb) => cb.dataset.id);
 
   try {
     const [res, acRes] = await Promise.all([
@@ -72,6 +99,7 @@ async function carregarDados() {
         cargo:      row.cargo,
         area:       row.area,
         empresa:    row.empresa,
+        fone:       row.fone,
         estado:     row.estado,
         cidade:     row.cidade,
         autodominio: row.autodominio,
@@ -86,11 +114,30 @@ async function carregarDados() {
         respostaAberta: row.resposta_aberta,
         tempoSegundos:  row.tempo_segundos ?? null,
         respostasQ:     row.respostas_q ?? null,
+        consentimentoEm:     row.consentimento_em ?? null,
+        consentimentoVersao: row.consentimento_versao ?? null,
+        teste:               row.teste === true,
+        respostasMantidas:   Array.isArray(row.respostas_mantidas) ? row.respostas_mantidas : null,
       };
     });
 
     limparSelecao();
+    atualizarOpcoesUnidade();
     renderizarPainel();
+
+    abertos.forEach((id) => {
+      const tr = document.querySelector(`tr.linha-registro[data-id="${CSS.escape(id)}"]`);
+      if (tr) toggleDetalhes(id, tr);
+    });
+    selecionados.forEach((id) => {
+      const cb = document.querySelector(`.check-linha[data-id="${CSS.escape(id)}"]`);
+      if (cb) cb.checked = true;
+    });
+    if (selecionados.length) atualizarBarraSelecao();
+
+    ultimaCarga = Date.now();
+    document.getElementById('ultima-atualizacao').textContent =
+      `Atualizado às ${new Date(ultimaCarga).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
   } catch (err) {
     status.textContent = 'Erro de conexão.';
     console.error(err);
@@ -114,47 +161,187 @@ function resolverPerfil(valor) {
   return { key: valor, nome: valor, cor: '#555' };
 }
 
-function renderizarPainel(filtro = 'todos') {
-  const dados = filtro === 'todos'
-    ? dadosAdmin
-    : dadosAdmin.filter((d) => d.perfil === filtro);
+// ─── Filtros gerais (período, unidade, registros de teste) ───────────────────
 
-  // Totais
-  document.getElementById('total-participantes').textContent = dadosAdmin.length;
+function nomeUnidade(d) {
+  return (d.empresa || '').replace(/\s+/g, ' ').trim() || 'Não informado';
+}
 
-  // Contadores por perfil
-  const contadores = { operador: 0, executor: 0, comunicador: 0, lider: 0 };
-  dadosAdmin.forEach((d) => { if (contadores[d.perfil] !== undefined) contadores[d.perfil]++; });
+function dentroDoPeriodo(d) {
+  const periodo = document.getElementById('filtro-periodo').value;
+  if (periodo === 'todos' || !d.data) return periodo === 'todos';
+  const data = new Date(d.data);
+  if (periodo === 'personalizado') {
+    const de  = document.getElementById('filtro-de').value;
+    const ate = document.getElementById('filtro-ate').value;
+    if (de  && data < new Date(`${de}T00:00:00`)) return false;
+    if (ate && data > new Date(`${ate}T23:59:59.999`)) return false;
+    return true;
+  }
+  return data >= new Date(Date.now() - Number(periodo) * 24 * 60 * 60 * 1000);
+}
 
-  Object.entries(contadores).forEach(([key, val]) => {
-    const el = document.getElementById('count-' + key);
-    if (el) el.textContent = val;
+function dadosBase() {
+  const unidade = document.getElementById('filtro-unidade').value;
+  const mostrarTeste = document.getElementById('filtro-mostrar-teste').checked;
+  return dadosAdmin.filter((d) =>
+    (mostrarTeste || !d.teste)
+    && dentroDoPeriodo(d)
+    && (!unidade || chaveUnidade(nomeUnidade(d)) === unidade)
+  );
+}
+
+function atualizarOpcoesUnidade() {
+  const select = document.getElementById('filtro-unidade');
+  const atual = select.value;
+  const grupos = {};
+  dadosAdmin.forEach((d) => {
+    const nome = nomeUnidade(d);
+    const chave = chaveUnidade(nome);
+    grupos[chave] ??= {};
+    grupos[chave][nome] = (grupos[chave][nome] || 0) + 1;
   });
+  const opcoes = Object.entries(grupos)
+    .map(([chave, grafias]) => [chave, Object.entries(grafias).sort((a, b) => b[1] - a[1])[0][0]])
+    .sort((a, b) => a[1].localeCompare(b[1], 'pt-BR'));
+  select.innerHTML = '<option value="">Todas as unidades</option>'
+    + opcoes.map(([chave, nome]) => `<option value="${esc(chave)}">${esc(nome)}</option>`).join('');
+  if (opcoes.some(([chave]) => chave === atual)) select.value = atual;
+}
 
-  // Gráfico pizza
+document.getElementById('filtro-periodo').addEventListener('change', (e) => {
+  document.getElementById('filtro-datas').classList.toggle('oculto', e.target.value !== 'personalizado');
+  renderizarPainel();
+});
+['filtro-de', 'filtro-ate', 'filtro-unidade', 'filtro-mostrar-teste'].forEach((id) => {
+  document.getElementById(id).addEventListener('change', renderizarPainel);
+});
+
+function renderizarPainel() {
+  const base = dadosBase();
+
+  const totalTeste = dadosAdmin.filter((d) => d.teste).length;
+  const mostrarTeste = document.getElementById('filtro-mostrar-teste').checked;
+  document.getElementById('filtro-resumo').textContent =
+    `${base.length} de ${dadosAdmin.length} registros`
+    + (totalTeste && !mostrarTeste ? ` · ${totalTeste} de teste oculto${totalTeste > 1 ? 's' : ''}` : '');
+
+  const contadores = { operador: 0, executor: 0, comunicador: 0, lider: 0 };
+  base.forEach((d) => { if (contadores[d.perfil] !== undefined) contadores[d.perfil]++; });
+
+  renderizarIndicadores(base, contadores);
+
+  // Gráfico pizza (quantidade de cada perfil na legenda)
   const pizzaDados = Object.entries(PERFIS_LABELS).map(([key, info]) => ({
-    label: info.nome,
+    label: `${info.nome} · ${contadores[key]}`,
     valor: contadores[key],
     cor: info.cor,
   }));
   if (chartPizzaAdmin) { chartPizzaAdmin.destroy(); }
   chartPizzaAdmin = renderarPizzaAdmin('canvas-pizza', pizzaDados);
 
-  // Distribuição por empresa
-  const porEmpresa = {};
-  dadosAdmin.forEach((d) => {
-    const u = d.empresa || 'Não informado';
-    porEmpresa[u] = (porEmpresa[u] || 0) + 1;
-  });
-  const unidadeEl = document.getElementById('lista-unidades');
-  unidadeEl.innerHTML = Object.entries(porEmpresa)
-    .sort((a, b) => b[1] - a[1])
-    .map(([u, n]) => `<li><strong>${u}</strong>: ${n}</li>`)
-    .join('');
-
-  // Tabela
-  renderizarTabela(dados);
+  renderizarUnidades(base);
+  aplicarFiltros();
 }
+
+// ─── Indicadores ──────────────────────────────────────────────────────────────
+
+function renderizarIndicadores(base, contadores) {
+  const definir = (id, valor, nota) => {
+    document.getElementById(id).textContent = valor;
+    document.getElementById(`${id}-nota`).textContent = nota;
+  };
+
+  const unidade = document.getElementById('filtro-unidade');
+  const periodo = document.getElementById('filtro-periodo');
+  const recorte = [
+    periodo.value !== 'todos' ? periodo.options[periodo.selectedIndex].text.replace('…', '').toLowerCase() : '',
+    unidade.value ? unidade.options[unidade.selectedIndex].text : '',
+  ].filter(Boolean).join(' · ');
+  definir('kpi-total', base.length, recorte || 'todo o período');
+
+  const limite30 = Date.now() - 30 * 24 * 60 * 60 * 1000;
+  const recentes = base.filter((d) => d.data && new Date(d.data).getTime() >= limite30).length;
+  definir('kpi-30', recentes, base.length ? `${Math.round((recentes / base.length) * 100)}% dos registros listados` : '');
+
+  const tempos = base.map((d) => d.tempoSegundos).filter((t) => Number.isFinite(t) && t > 0);
+  const media = tempos.length ? Math.round(tempos.reduce((a, t) => a + t, 0) / tempos.length) : null;
+  definir('kpi-tempo', media ? formatarTempo(media) : '—',
+    tempos.length ? `média de ${tempos.length} resposta${tempos.length > 1 ? 's' : ''} com tempo registrado` : 'sem tempo registrado');
+
+  const [chave, qtd] = Object.entries(contadores).sort((a, b) => b[1] - a[1])[0] || [];
+  const elPerfil = document.getElementById('kpi-perfil');
+  if (base.length && qtd) {
+    const empate = Object.values(contadores).filter((v) => v === qtd).length > 1;
+    definir('kpi-perfil', PERFIS_LABELS[chave].nome,
+      `${qtd} participante${qtd > 1 ? 's' : ''} · ${Math.round((qtd / base.length) * 100)}%${empate ? ' · empatado' : ''}`);
+    elPerfil.style.color = PERFIS_LABELS[chave].cor;
+  } else {
+    definir('kpi-perfil', '—', '');
+    elPerfil.style.color = '';
+  }
+}
+
+// ─── Abas ─────────────────────────────────────────────────────────────────────
+
+document.querySelectorAll('.aba').forEach((aba) => {
+  aba.addEventListener('click', () => {
+    document.querySelectorAll('.aba').forEach((a) => {
+      const ativa = a === aba;
+      a.classList.toggle('ativa', ativa);
+      a.setAttribute('aria-selected', String(ativa));
+      document.getElementById(a.dataset.aba).classList.toggle('oculto', !ativa);
+    });
+    document.getElementById('btn-exportar-csv').classList.toggle('oculto', aba.dataset.aba !== 'aba-resultados');
+  });
+});
+
+// ─── Unidades de negócio ─────────────────────────────────────────────────────
+
+const UNIDADES_VISIVEIS = 8;
+let mostrarTodasUnidades = false;
+
+function chaveUnidade(nome) {
+  return nome.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
+}
+
+function renderizarUnidades(base = dadosBase()) {
+  // Agrupa grafias diferentes da mesma empresa (acento, maiúsculas, espaços)
+  const grupos = {};
+  base.forEach((d) => {
+    const original = nomeUnidade(d);
+    const chave = chaveUnidade(original);
+    grupos[chave] ??= { total: 0, grafias: {} };
+    grupos[chave].total++;
+    grupos[chave].grafias[original] = (grupos[chave].grafias[original] || 0) + 1;
+  });
+
+  const lista = Object.values(grupos)
+    .map((g) => ({
+      nome: Object.entries(g.grafias).sort((a, b) => b[1] - a[1])[0][0],
+      total: g.total,
+      variacoes: Object.keys(g.grafias).length,
+    }))
+    .sort((a, b) => b.total - a.total || a.nome.localeCompare(b.nome, 'pt-BR'));
+
+  const maior = lista[0]?.total || 1;
+  const visiveis = mostrarTodasUnidades ? lista : lista.slice(0, UNIDADES_VISIVEIS);
+  document.getElementById('lista-unidades').innerHTML = visiveis.map((u) => `
+    <li title="${u.variacoes > 1 ? `${u.variacoes} grafias agrupadas` : ''}">
+      <span class="un-nome">${esc(u.nome)}</span>
+      <span class="un-barra"><span style="width:${(u.total / maior) * 100}%"></span></span>
+      <span class="un-total">${u.total}</span>
+    </li>`).join('');
+
+  const btn = document.getElementById('btn-ver-unidades');
+  btn.classList.toggle('oculto', lista.length <= UNIDADES_VISIVEIS);
+  btn.textContent = mostrarTodasUnidades ? 'Mostrar menos' : `Ver todas (${lista.length})`;
+}
+
+document.getElementById('btn-ver-unidades').addEventListener('click', () => {
+  mostrarTodasUnidades = !mostrarTodasUnidades;
+  renderizarUnidades();
+});
 
 function ordenarDados(dados) {
   return [...dados].sort((a, b) => {
@@ -169,13 +356,18 @@ function ordenarDados(dados) {
 }
 
 function atualizarIconesOrdenacao() {
-  ['data', 'nome', 'email'].forEach((col) => {
+  ['data', 'nome'].forEach((col) => {
     const th = document.querySelector(`th[data-sort="${col}"]`);
     if (!th) return;
     const ico = th.querySelector('.sort-ico');
     if (!ico) return;
-    ico.textContent = sortCol === col ? (sortDir === 'asc' ? ' ▲' : ' ▼') : ' ↕';
+    ico.textContent = sortCol === col ? (sortDir === 'asc' ? 'arrow_upward' : 'arrow_downward') : 'unfold_more';
   });
+}
+
+function badgeSlots(email) {
+  const slots = slotsAdmin[email] || 0;
+  return slots > 0 ? `<span class="slots-badge" title="${slots} teste(s) liberado(s)">${slots}</span>` : '';
 }
 
 function renderizarTabela(dados) {
@@ -183,68 +375,68 @@ function renderizarTabela(dados) {
   tbody.innerHTML = '';
   dados = ordenarDados(dados);
 
-  // Resetar checkbox "selecionar todos"
   const checkTodos = document.getElementById('check-todos');
   if (checkTodos) checkTodos.checked = false;
 
   if (dados.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="12" style="text-align:center;padding:1rem;">Nenhum registro encontrado.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:1rem;">Nenhum registro encontrado.</td></tr>';
     return;
   }
 
   dados.forEach((d) => {
     const dataStr = d.data ? new Date(d.data).toLocaleDateString('pt-BR') : '—';
-    const slots = slotsAdmin[d.email] || 0;
-    const slotsBadge = slots > 0
-      ? `<span class="badge-slots badge-slots-ativo" title="${slots} teste(s) liberado(s)">${slots}</span>`
-      : `<span class="badge-slots" title="Nenhum teste liberado">—</span>`;
     const tr = document.createElement('tr');
+    tr.className = d.teste ? 'linha-registro e-teste' : 'linha-registro';
     tr.dataset.id = d.id;
     tr.dataset.email = d.email;
+    tr.tabIndex = 0;
+    tr.setAttribute('aria-expanded', 'false');
+    tr.title = 'Clique para ver os detalhes';
     tr.innerHTML = `
       <td class="col-check">
-        <input type="checkbox" class="check-linha" data-id="${d.id}" title="Selecionar">
+        <input type="checkbox" class="check-linha" data-id="${esc(d.id)}" title="Selecionar">
       </td>
-      <td>${dataStr}</td>
-      <td>${d.nome}</td>
-      <td>${d.email}</td>
-      <td>${d.cargo}</td>
-      <td>${d.empresa || '—'}</td>
-      <td>
-        <span class="badge-perfil" style="background:${d.perfilCor}20;color:${d.perfilCor};border:1px solid ${d.perfilCor}40">
-          ${d.perfilNome}
-        </span>
+      <td class="col-data">${dataStr}</td>
+      <td class="col-participante">
+        <span class="cel-principal">${esc(nomeExibicao(d.nome))}${d.teste ? '<span class="tag-teste">Teste</span>' : ''}</span>
+        <span class="cel-secundaria" title="${esc(d.email)}">${esc(d.email).replace('@', '@<wbr>')}</span>
       </td>
-      <td>${Number(d.eixoX).toFixed(0)} / ${Number(d.eixoY).toFixed(0)}</td>
-      <td class="resposta-aberta" title="${(d.respostaAberta || '').replace(/"/g, '&quot;')}">${d.respostaAberta || '—'}</td>
-      <td class="col-tempo">${formatarTempo(d.tempoSegundos)}</td>
-      <td class="col-slots">${slotsBadge}</td>
+      <td class="col-empresa">
+        <span class="cel-principal">${esc(d.empresa || '—')}</span>
+        <span class="cel-secundaria">${esc(d.cargo || '')}</span>
+      </td>
+      <td class="col-perfil">
+        <span class="badge-perfil" style="background:${d.perfilCor}20;color:${d.perfilCor};border:1px solid ${d.perfilCor}40">${esc(d.perfilNome)}</span>
+      </td>
       <td class="col-acoes">
-        <button class="btn-pdf2" data-id="${d.id}" title="Gerar PDF do resultado">📄</button>
-        ${d.respostasQ ? `<button class="btn-detalhes" data-id="${d.id}" title="Ver respostas individuais">≡</button>` : ''}
-        <button class="btn-liberar" data-email="${d.email}" data-nome="${d.nome}" title="Liberar novo teste para este participante">+</button>
-        <button class="btn-lixeira" data-id="${d.id}" title="Excluir este registro">🗑</button>
+        <span class="acoes-linha">
+          <button class="btn-acao btn-pdf2" data-id="${esc(d.id)}" title="Gerar PDF do resultado" aria-label="Gerar PDF do resultado">${icone('picture_as_pdf')}</button>
+          <button class="btn-acao btn-liberar" data-email="${esc(d.email)}" data-nome="${esc(nomeExibicao(d.nome))}" title="Liberar novo teste" aria-label="Liberar novo teste">${icone('replay')}${badgeSlots(d.email)}</button>
+          <button class="btn-acao btn-lixeira" data-id="${esc(d.id)}" title="Excluir este registro" aria-label="Excluir este registro">${icone('delete')}</button>
+          <button class="btn-acao btn-detalhes" title="Ver mais informações" aria-label="Ver mais informações">${icone('expand_more')}</button>
+        </span>
       </td>
     `;
     tbody.appendChild(tr);
+
+    tr.addEventListener('click', (e) => {
+      if (e.target.closest('button, input')) return;
+      toggleDetalhes(d.id, tr);
+    });
+    tr.querySelector('.btn-detalhes').addEventListener('click', () => toggleDetalhes(d.id, tr));
+    tr.addEventListener('keydown', (e) => {
+      if ((e.key === 'Enter' || e.key === ' ') && e.target === tr) { e.preventDefault(); toggleDetalhes(d.id, tr); }
+    });
   });
 
-  // Listeners das caixas de linha
   tbody.querySelectorAll('.check-linha').forEach((cb) => {
     cb.addEventListener('change', atualizarBarraSelecao);
   });
 
-  // Listeners dos botões de PDF
   tbody.querySelectorAll('.btn-pdf2').forEach((btn) => {
     btn.addEventListener('click', () => gerarPDFAdminNovo(btn.dataset.id, btn));
   });
 
-  // Listeners dos botões de detalhes (respostas individuais)
-  tbody.querySelectorAll('.btn-detalhes').forEach((btn) => {
-    btn.addEventListener('click', () => toggleDetalhes(btn.dataset.id, btn));
-  });
-
-  // Listeners dos botões de lixeira individuais
   tbody.querySelectorAll('.btn-lixeira').forEach((btn) => {
     btn.addEventListener('click', () => {
       const id   = btn.dataset.id;
@@ -253,7 +445,6 @@ function renderizarTabela(dados) {
     });
   });
 
-  // Listeners dos botões de liberar
   tbody.querySelectorAll('.btn-liberar').forEach((btn) => {
     btn.addEventListener('click', () => liberarTeste(btn.dataset.email, btn.dataset.nome));
   });
@@ -330,6 +521,41 @@ async function confirmarExclusao(ids, mensagem) {
   }
 }
 
+// ─── Registros de teste ──────────────────────────────────────────────────────
+
+async function marcarComoTeste(ids, valor) {
+  const status = document.getElementById('status-carregando');
+  status.textContent = valor ? 'Marcando como teste…' : 'Desmarcando…';
+  try {
+    const idList = ids.map((id) => `"${id}"`).join(',');
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/respostas?id=in.(${idList})`, {
+      method: 'PATCH',
+      headers: { ...SB_HEADERS, 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ teste: valor }),
+    });
+    if (!res.ok) {
+      status.textContent = 'Não foi possível salvar. Verifique se a coluna "teste" foi criada no banco.';
+      return;
+    }
+    dadosAdmin.forEach((d) => { if (ids.includes(d.id)) d.teste = valor; });
+    const n = ids.length;
+    status.textContent = valor
+      ? `${n} registro${n > 1 ? 's' : ''} marcado${n > 1 ? 's' : ''} como teste.`
+      : `${n} registro${n > 1 ? 's' : ''} desmarcado${n > 1 ? 's' : ''}.`;
+    setTimeout(() => { status.textContent = ''; }, 3000);
+    limparSelecao();
+    renderizarPainel();
+  } catch (err) {
+    status.textContent = 'Erro de conexão ao salvar.';
+    console.error(err);
+  }
+}
+
+document.getElementById('btn-marcar-teste-selecionados').addEventListener('click', () => {
+  const ids = [...document.querySelectorAll('.check-linha:checked')].map((cb) => cb.dataset.id);
+  if (ids.length) marcarComoTeste(ids, true);
+});
+
 // ─── Busca e filtro ──────────────────────────────────────────────────────────
 
 document.getElementById('campo-busca').addEventListener('input', aplicarFiltros);
@@ -339,7 +565,7 @@ function aplicarFiltros() {
   const busca  = document.getElementById('campo-busca').value.toLowerCase();
   const perfil = document.getElementById('filtro-perfil').value;
 
-  let filtrados = dadosAdmin;
+  let filtrados = dadosBase();
   if (perfil !== 'todos') filtrados = filtrados.filter((d) => d.perfil === perfil);
   if (busca) {
     filtrados = filtrados.filter((d) =>
@@ -348,24 +574,26 @@ function aplicarFiltros() {
       )
     );
   }
+  listaTabela = filtrados;
   renderizarTabela(filtrados);
 }
 
 // ─── Exportar CSV ────────────────────────────────────────────────────────────
 
 document.getElementById('btn-exportar-csv').addEventListener('click', () => {
-  const headers = ['Data', 'Nome', 'Email', 'Fone', 'Empresa', 'Cargo', 'Área', 'Estado', 'Cidade', 'Autodomínio', 'Direção', 'Influência', 'Maestria', 'Eixo X', 'Eixo Y', 'Perfil', 'Resposta Aberta'];
-  const rows = dadosAdmin.map((d) => [
+  const headers = ['Data', 'Nome', 'Email', 'Fone', 'Empresa', 'Cargo', 'Área', 'Estado', 'Cidade', 'Autodomínio', 'Direção', 'Influência', 'Maestria', 'Eixo X', 'Eixo Y', 'Perfil', 'Resposta Aberta', 'Teste'];
+  const rows = ordenarDados(listaTabela).map((d) => [
     d.data ? new Date(d.data).toLocaleDateString('pt-BR') : '',
     d.nome, d.email, d.fone || '', d.empresa || '', d.cargo, d.area,
     d.estado || '', d.cidade || '',
     d.autodominio, d.direcao, d.influencia, d.maestria,
     d.eixoX, d.eixoY, d.perfil,
-    (d.respostaAberta || '').replace(/"/g, '""'),
+    d.respostaAberta || '',
+    d.teste ? 'sim' : '',
   ]);
 
   const csv = [headers, ...rows]
-    .map((row) => row.map((v) => `"${v}"`).join(','))
+    .map((row) => row.map((v) => `"${String(v ?? '').replace(/"/g, '""')}"`).join(','))
     .join('\n');
 
   const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
@@ -406,8 +634,8 @@ async function liberarTeste(email, nome) {
       // Atualiza o badge na linha sem recarregar tudo
       const novosSlots = slotsAtuais + 1;
       slotsAdmin[email] = novosSlots;
-      document.querySelectorAll(`tr[data-email="${CSS.escape(email)}"] .col-slots`).forEach((td) => {
-        td.innerHTML = `<span class="badge-slots badge-slots-ativo" title="${novosSlots} teste(s) liberado(s)">${novosSlots}</span>`;
+      document.querySelectorAll(`tr[data-email="${CSS.escape(email)}"] .btn-liberar`).forEach((b) => {
+        b.innerHTML = `${icone('replay')}${badgeSlots(email)}`;
       });
     } else {
       status.textContent = 'Erro ao liberar acesso.';
@@ -420,47 +648,79 @@ async function liberarTeste(email, nome) {
 
 // ─── Detalhes: respostas individuais ────────────────────────────────────────
 
-function toggleDetalhes(id, btn) {
-  const tr = btn.closest('tr');
+function toggleDetalhes(id, tr) {
   const existente = tr.nextElementSibling;
   if (existente && existente.classList.contains('tr-detalhes')) {
     existente.remove();
-    btn.classList.remove('ativo');
+    tr.classList.remove('aberta');
+    tr.setAttribute('aria-expanded', 'false');
     return;
   }
 
   const d = dadosAdmin.find((r) => r.id === id);
-  if (!d || !d.respostasQ) return;
+  if (!d) return;
 
-  const NOMES_PARTE = ['Na Rotina Real', 'Decisões e Relações', 'Sob Pressão', 'Liderança em Movimento'];
-  const perguntas = typeof PERGUNTAS !== 'undefined' ? PERGUNTAS : [];
+  const local = [d.cidade, d.estado].filter(Boolean).join(' / ') || '—';
+  const consentimento = d.consentimentoEm
+    ? `${new Date(d.consentimentoEm).toLocaleString('pt-BR')}${d.consentimentoVersao ? ` (versão ${d.consentimentoVersao})` : ''}`
+    : 'Não registrado';
+  const info = [
+    ['Telefone', d.fone || '—'],
+    ['Área', d.area || '—'],
+    ['Cidade / UF', local],
+    ['Tempo de resposta', formatarTempo(d.tempoSegundos)],
+    ['Direção (X) / Impacto (Y)', `${Number(d.eixoX).toFixed(0)} / ${Number(d.eixoY).toFixed(0)}`],
+    ['Testes liberados', String(slotsAdmin[d.email] || 0)],
+    ['Mantidas em 5 pelo aviso', d.respostasMantidas == null ? 'Não registrado' : d.respostasMantidas.length ? `${d.respostasMantidas.length} pergunta${d.respostasMantidas.length > 1 ? 's' : ''}` : 'Nenhuma'],
+    ['Consentimento LGPD', consentimento],
+  ].map(([k, v]) => `<div class="det-campo"><span class="det-rotulo">${k}</span><span class="det-valor">${esc(v)}</span></div>`).join('');
 
-  const secoesHtml = NOMES_PARTE.map((nome, pi) => {
-    const qs = perguntas.filter((p) => p.parte === pi + 1);
-    const linhas = qs.map((p) => {
-      const val = d.respostasQ[p.id - 1] ?? '—';
-      const inv = p.invertida ? ' <span style="color:#aaa;font-size:0.7em">(inv)</span>' : '';
-      const cor = val >= 7 ? '#1A6B45' : val >= 4 ? '#B7770D' : '#CC4400';
-      return `<tr>
-        <td style="padding:4px 8px;color:#888;font-size:0.78rem;white-space:nowrap">${p.id}</td>
-        <td style="padding:4px 8px;font-size:0.82rem;line-height:1.4">${p.texto}${inv}</td>
-        <td style="padding:4px 12px;text-align:center;font-weight:700;color:${cor};white-space:nowrap">${val}</td>
-      </tr>`;
-    }).join('');
-    return `<div style="margin-bottom:12px">
-      <div style="font-size:0.75rem;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">${nome}</div>
-      <table style="width:100%;border-collapse:collapse">${linhas}</table>
+  const dimensoes = [
+    ['Autodomínio', d.autodominio, '#651707'],
+    ['Direção',     d.direcao,     '#ffab24'],
+    ['Influência',  d.influencia,  '#f8572d'],
+    ['Maestria',    d.maestria,    '#037a54'],
+  ].map(([nome, valor, cor]) => {
+    const v = Math.max(0, Math.min(100, Number(valor) || 0));
+    return `<div class="dim-linha">
+      <span class="dim-nome">${nome}</span>
+      <span class="dim-trilho"><span class="dim-barra" style="width:${v}%;background:${cor}"></span></span>
+      <span class="dim-valor" style="color:${cor}">${v}%</span>
     </div>`;
   }).join('');
 
+  let respostasHtml = '';
+  if (d.respostasQ) {
+    const NOMES_PARTE = ['Na Rotina Real', 'Decisões e Relações', 'Sob Pressão', 'Liderança em Movimento'];
+    const perguntas = typeof PERGUNTAS !== 'undefined' ? PERGUNTAS : [];
+    const secoes = NOMES_PARTE.map((nome, pi) => {
+      const linhas = perguntas.filter((p) => p.parte === pi + 1).map((p) => {
+        const val = d.respostasQ[p.id - 1] ?? '—';
+        const inv = (p.invertida ? ' <span class="det-inv">(inv)</span>' : '')
+          + (d.respostasMantidas?.includes(p.id) ? ' <span class="det-mantida" title="Confirmada em 5 pelo aviso de perguntas pendentes">mantida</span>' : '');
+        const cor = val >= 7 ? '#1A6B45' : val >= 4 ? '#B7770D' : '#CC4400';
+        return `<tr><td class="det-q-num">${p.id}</td><td class="det-q-texto">${esc(p.texto)}${inv}</td><td class="det-q-val" style="color:${cor}">${esc(val)}</td></tr>`;
+      }).join('');
+      return `<div class="det-parte"><div class="det-parte-titulo">${nome}</div><table>${linhas}</table></div>`;
+    }).join('');
+    respostasHtml = `<details class="det-respostas"><summary>Respostas individuais (48)</summary><div class="det-partes">${secoes}</div></details>`;
+  }
+
   const trDet = document.createElement('tr');
   trDet.className = 'tr-detalhes';
-  trDet.innerHTML = `<td colspan="12" style="background:#FAFAF8;padding:16px 20px;border-bottom:2px solid var(--cor-borda)">
-    <strong style="font-size:0.85rem">Respostas de ${d.nome}</strong>
-    <div style="margin-top:12px;columns:2;column-gap:24px">${secoesHtml}</div>
+  trDet.innerHTML = `<td colspan="6">
+    <div class="det-acoes">
+      <button type="button" class="btn-marcar-teste">${icone('science')}${d.teste ? 'Desmarcar como teste' : 'Marcar como teste'}</button>
+    </div>
+    <div class="det-grid">${info}</div>
+    <div class="det-dimensoes"><span class="det-rotulo">Dimensões de liderança</span><div class="dim-lista">${dimensoes}</div></div>
+    <div class="det-reflexao"><span class="det-rotulo">Reflexão final</span><p>${esc(d.respostaAberta || '—')}</p></div>
+    ${respostasHtml}
   </td>`;
   tr.after(trDet);
-  btn.classList.add('ativo');
+  trDet.querySelector('.btn-marcar-teste').addEventListener('click', () => marcarComoTeste([d.id], !d.teste));
+  tr.classList.add('aberta');
+  tr.setAttribute('aria-expanded', 'true');
 }
 
 // ─── Gerar PDF de um registro ────────────────────────────────────────────────
@@ -501,7 +761,7 @@ async function gerarPDFAdminNovo(id, btn) {
   const d = dadosAdmin.find((r) => r.id === id);
   if (!d) return;
   btn.classList.add('gerando');
-  btn.textContent = '…';
+  btn.innerHTML = icone('progress_activity');
   try {
     const scores = {
       perfil:      d.perfil,
@@ -512,14 +772,14 @@ async function gerarPDFAdminNovo(id, btn) {
       eixoX:       Number(d.eixoX),
       eixoY:       Number(d.eixoY),
     };
-    const ud = { nome: d.nome, empresa: d.empresa || '', cargo: d.cargo || '' };
+    const ud = { nome: nomeExibicao(d.nome), empresa: d.empresa || '', cargo: d.cargo || '' };
     await gerarPDFNovo(scores, ud);
   } catch (err) {
     console.error('Erro ao gerar PDF novo:', err);
     alert('Erro ao gerar PDF novo. Verifique o console.');
   } finally {
     btn.classList.remove('gerando');
-    btn.textContent = '⚡';
+    btn.innerHTML = icone('picture_as_pdf');
   }
 }
 
@@ -542,7 +802,13 @@ document.querySelectorAll('th[data-sort]').forEach((th) => {
 
 // ─── Atualizar dados ─────────────────────────────────────────────────────────
 
-document.getElementById('btn-atualizar').addEventListener('click', carregarDados);
+// Ao voltar para a aba do navegador, busca os dados de novo (sem recarregar a página)
+document.addEventListener('visibilitychange', () => {
+  const logado = !document.getElementById('tela-painel').classList.contains('oculto');
+  if (document.visibilityState === 'visible' && logado && Date.now() - ultimaCarga > INTERVALO_MIN_ATUALIZACAO) {
+    carregarDados({ silencioso: true });
+  }
+});
 
 // ─── Termo de consentimento (LGPD) ───────────────────────────────────────────
 
