@@ -66,6 +66,17 @@ function concluirTrocaPendente() {
 }
 
 // opcoes.semAnimacao: atalhos de desenvolvimento; opcoes.antes: roda logo antes de exibir a nova tela
+async function chamarFuncao(nome, parametros) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${nome}`, {
+    method: 'POST',
+    headers: SB_HEADERS,
+    body: JSON.stringify(parametros),
+  });
+  if (!res.ok) throw new Error(`Falha em ${nome}: ${res.status}`);
+  const texto = await res.text();
+  return texto ? JSON.parse(texto) : null;
+}
+
 function mostrarTela(id, opcoes = {}) {
   const pendente = concluirTrocaPendente();
   const atual = document.body.dataset.tela;
@@ -148,25 +159,15 @@ document.getElementById('form-identificacao').addEventListener('submit', async (
   btnSubmit.disabled = true;
 
   try {
-    // Verifica resultado anterior
-    const resRes = await fetch(
-      `${SUPABASE_URL}/rest/v1/respostas?email=eq.${encodeURIComponent(email)}&select=*&order=created_at.desc&limit=1`,
-      { headers: SB_HEADERS }
-    );
-    const rows = await resRes.json();
-    const temResultado = rows.length > 0;
+    // Verifica resultado anterior (função no banco: o público não lê a tabela)
+    const anterior = await chamarFuncao('resultado_anterior', { p_email: email });
 
-    if (temResultado) {
-      // Verifica se tem slot liberado pelo admin
-      const acRes = await fetch(
-        `${SUPABASE_URL}/rest/v1/acessos?email=eq.${encodeURIComponent(email)}&select=slots`,
-        { headers: SB_HEADERS }
-      );
-      const acRows = await acRes.json();
-      const slots = acRows.length > 0 ? acRows[0].slots : 0;
+    if (anterior) {
+      // Verifica se tem teste liberado pelo admin
+      const slots = (await chamarFuncao('slots_disponiveis', { p_email: email })) || 0;
 
       if (slots < 1) {
-        mostrarBloqueado(email, rows[0]);
+        mostrarBloqueado(email, anterior);
         return;
       }
       // Tem slot liberado — registra para consumir após o teste
@@ -548,16 +549,9 @@ async function enviarDados() {
         localStorage.setItem('hedra_participantes', JSON.stringify(jaFez));
       }
 
-      // Consumir slot se o acesso foi liberado pelo admin
+      // Consumir o teste liberado pelo admin
       if (_pendingSlots && _pendingSlots.email === userData.email) {
-        await fetch(
-          `${SUPABASE_URL}/rest/v1/acessos?email=eq.${encodeURIComponent(userData.email)}`,
-          {
-            method: 'PATCH',
-            headers: { ...SB_HEADERS, 'Prefer': 'return=minimal' },
-            body: JSON.stringify({ slots: _pendingSlots.slots - 1 }),
-          }
-        );
+        await chamarFuncao('consumir_slot', { p_email: userData.email });
         _pendingSlots = null;
       }
     }

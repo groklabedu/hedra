@@ -1,11 +1,18 @@
 const SUPABASE_URL = 'https://ilpspfqkdgbzvjesdzmv.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlscHNwZnFrZGdienZqZXNkem12Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAzNTYzNDEsImV4cCI6MjEwNTkzMjM0MX0.4FTajA7ZGARYPs0cxbvQBdmEZP87qk_Ql1UoNO6KTGI';
+// Authorization recebe o token do administrador logado (ver onAuthStateChange)
 const SB_HEADERS = {
   'apikey': SUPABASE_KEY,
   'Authorization': `Bearer ${SUPABASE_KEY}`,
   'Content-Type': 'application/json',
 };
-const ADMIN_KEY = 'HEDRA@admin2026';
+
+// Lido antes de criar o cliente, que limpa o endereço ao processar o link do e-mail
+const LINK_EMAIL = new URLSearchParams(window.location.hash.slice(1));
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+  auth: { flowType: 'implicit', persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
+});
 
 let dadosAdmin = [];
 let slotsAdmin = {}; // { email: slots }
@@ -40,23 +47,141 @@ function formatarTempo(seg) {
   return m > 0 ? `${m}m ${String(s).padStart(2,'0')}s` : `${s}s`;
 }
 
-// ─── Login ───────────────────────────────────────────────────────────────────
+// ─── Login (Supabase Auth) ───────────────────────────────────────────────────
 
-document.getElementById('btn-login').addEventListener('click', () => {
-  const senha = document.getElementById('campo-senha').value;
-  if (senha !== ADMIN_KEY) {
-    document.getElementById('msg-erro-login').classList.remove('oculto');
+const TELAS_LOGIN = ['form-login', 'form-esqueci', 'form-senha', 'login-sem-acesso', 'login-carregando'];
+
+function mostrarLogin(id) {
+  document.getElementById('tela-painel').classList.add('oculto');
+  document.getElementById('tela-login').classList.remove('oculto');
+  TELAS_LOGIN.forEach((t) => document.getElementById(t).classList.toggle('oculto', t !== id));
+  document.querySelectorAll('#tela-login .alerta').forEach((a) => a.classList.add('oculto'));
+  document.querySelector(`#${id} input`)?.focus();
+}
+
+function mostrarErro(id, texto) {
+  const el = document.getElementById(id);
+  el.textContent = texto;
+  el.classList.remove('oculto');
+}
+
+function traduzirErroAuth(err) {
+  const msg = (err?.message || '').toLowerCase();
+  if (msg.includes('invalid login credentials')) return 'E-mail ou senha incorretos.';
+  if (msg.includes('email not confirmed')) return 'Este e-mail ainda não foi confirmado. Use o link do convite.';
+  if (msg.includes('should be different')) return 'A nova senha precisa ser diferente da atual.';
+  if (msg.includes('password should be at least')) return 'A senha precisa ter pelo menos 8 caracteres.';
+  if (msg.includes('rate limit') || msg.includes('too many')) return 'Muitas tentativas. Aguarde alguns minutos e tente de novo.';
+  return 'Não foi possível concluir. Tente novamente.';
+}
+
+function mostrarFormSenha(modo) {
+  const alterar = modo === 'alterar';
+  document.getElementById('senha-titulo').textContent = alterar ? 'Alterar senha' : 'Defina sua senha';
+  document.getElementById('senha-texto').textContent = alterar
+    ? 'Escolha uma nova senha para o seu acesso. Use pelo menos 8 caracteres.'
+    : 'Crie a senha que você vai usar para entrar no painel. Use pelo menos 8 caracteres.';
+  document.getElementById('senha-cancelar').classList.toggle('oculto', !alterar);
+  document.getElementById('form-senha').reset();
+  mostrarLogin('form-senha');
+}
+
+async function entrarNoPainel(session) {
+  mostrarLogin('login-carregando');
+  SB_HEADERS.Authorization = `Bearer ${session.access_token}`;
+  const { data: admin, error } = await sb.rpc('e_admin');
+  if (error || admin !== true) {
+    await sb.auth.signOut();
+    mostrarLogin('login-sem-acesso');
     return;
   }
+  document.getElementById('usuario-logado').textContent = session.user.email;
   document.getElementById('tela-login').classList.add('oculto');
   document.getElementById('tela-painel').classList.remove('oculto');
   carregarDados();
   carregarTermoLGPD();
+}
+
+sb.auth.onAuthStateChange((evento, session) => {
+  SB_HEADERS.Authorization = `Bearer ${session?.access_token || SUPABASE_KEY}`;
+  if (evento === 'SIGNED_OUT') {
+    dadosAdmin = [];
+    mostrarLogin('form-login');
+  }
 });
 
-document.getElementById('campo-senha').addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') document.getElementById('btn-login').click();
+document.querySelectorAll('#tela-login [data-ir]').forEach((btn) => {
+  btn.addEventListener('click', () => mostrarLogin(btn.dataset.ir));
 });
+
+document.getElementById('form-login').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-senha').value;
+  if (!email || !password) { mostrarErro('login-erro', 'Preencha o e-mail e a senha.'); return; }
+  const btn = e.submitter;
+  btn.disabled = true;
+  const { data, error } = await sb.auth.signInWithPassword({ email, password });
+  btn.disabled = false;
+  if (error) { mostrarErro('login-erro', traduzirErroAuth(error)); return; }
+  document.getElementById('login-senha').value = '';
+  entrarNoPainel(data.session);
+});
+
+document.getElementById('form-esqueci').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const email = document.getElementById('esqueci-email').value.trim();
+  if (!email) return;
+  const btn = e.submitter;
+  btn.disabled = true;
+  await sb.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + window.location.pathname });
+  btn.disabled = false;
+  // Mesma mensagem com ou sem conta, para não revelar quais e-mails existem
+  const msg = document.getElementById('esqueci-msg');
+  msg.textContent = 'Se este e-mail tiver acesso ao painel, enviamos um link para criar uma nova senha. Confira também a caixa de spam.';
+  msg.classList.remove('oculto');
+});
+
+document.getElementById('form-senha').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const nova = document.getElementById('senha-nova').value;
+  const confirma = document.getElementById('senha-confirma').value;
+  if (nova.length < 8) { mostrarErro('senha-erro', 'A senha precisa ter pelo menos 8 caracteres.'); return; }
+  if (nova !== confirma) { mostrarErro('senha-erro', 'As duas senhas não são iguais.'); return; }
+  const btn = e.submitter;
+  btn.disabled = true;
+  const { error } = await sb.auth.updateUser({ password: nova });
+  btn.disabled = false;
+  if (error) { mostrarErro('senha-erro', traduzirErroAuth(error)); return; }
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) entrarNoPainel(session);
+  else mostrarLogin('form-login');
+});
+
+document.getElementById('senha-cancelar').addEventListener('click', () => {
+  document.getElementById('tela-login').classList.add('oculto');
+  document.getElementById('tela-painel').classList.remove('oculto');
+});
+
+document.getElementById('btn-alterar-senha').addEventListener('click', () => mostrarFormSenha('alterar'));
+document.getElementById('btn-sair').addEventListener('click', () => sb.auth.signOut());
+
+(async function iniciarLogin() {
+  mostrarLogin('login-carregando');
+  const { data: { session } } = await sb.auth.getSession();
+  const tipo = LINK_EMAIL.get('type');
+
+  if (LINK_EMAIL.get('error')) {
+    mostrarLogin('form-login');
+    mostrarErro('login-erro', 'Este link expirou ou já foi usado. Use "Esqueci minha senha" para receber um novo.');
+  } else if (session && (tipo === 'invite' || tipo === 'recovery')) {
+    mostrarFormSenha('definir');
+  } else if (session) {
+    entrarNoPainel(session);
+  } else {
+    mostrarLogin('form-login');
+  }
+}());
 
 // ─── Carregar dados ──────────────────────────────────────────────────────────
 
