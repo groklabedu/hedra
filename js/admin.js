@@ -163,8 +163,26 @@ document.getElementById('senha-cancelar').addEventListener('click', () => {
   document.getElementById('tela-painel').classList.remove('oculto');
 });
 
-document.getElementById('btn-alterar-senha').addEventListener('click', () => mostrarFormSenha('alterar'));
-document.getElementById('btn-sair').addEventListener('click', () => sb.auth.signOut());
+// Menu da conta (alterar senha / sair)
+const btnConta = document.getElementById('btn-conta');
+const menuConta = document.getElementById('conta-menu');
+
+function abrirMenuConta(abrir) {
+  menuConta.classList.toggle('oculto', !abrir);
+  btnConta.setAttribute('aria-expanded', String(abrir));
+  if (abrir) menuConta.querySelector('button').focus();
+}
+
+btnConta.addEventListener('click', () => abrirMenuConta(menuConta.classList.contains('oculto')));
+document.addEventListener('click', (e) => {
+  if (!menuConta.classList.contains('oculto') && !e.target.closest('.conta')) abrirMenuConta(false);
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && !menuConta.classList.contains('oculto')) { abrirMenuConta(false); btnConta.focus(); }
+});
+
+document.getElementById('btn-alterar-senha').addEventListener('click', () => { abrirMenuConta(false); mostrarFormSenha('alterar'); });
+document.getElementById('btn-sair').addEventListener('click', () => { abrirMenuConta(false); sb.auth.signOut(); });
 
 (async function iniciarLogin() {
   mostrarLogin('login-carregando');
@@ -417,7 +435,6 @@ document.querySelectorAll('.aba').forEach((aba) => {
       a.setAttribute('aria-selected', String(ativa));
       document.getElementById(a.dataset.aba).classList.toggle('oculto', !ativa);
     });
-    document.getElementById('btn-exportar-csv').classList.toggle('oculto', aba.dataset.aba !== 'aba-resultados');
   });
 });
 

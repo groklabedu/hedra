@@ -25,7 +25,7 @@
       .painel-grid { grid-template-columns: 1fr; }
     }
 
-    .ultima-atualizacao { font-size: 0.8rem; color: #999; font-variant-numeric: tabular-nums; }
+    .ultima-atualizacao { font-size: 0.8rem; color: #999; font-variant-numeric: tabular-nums; white-space: nowrap; }
 
     /* Abas */
     .abas {
@@ -464,7 +464,65 @@
       cursor: pointer;
     }
     #esqueci-msg { background: #F3F8F1; border: 1px solid #1ca31c40; color: #24622a; }
-    .usuario-logado { font-size: 0.8rem; color: #777; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    /* Topo: atualização e menu da conta */
+    .topo-direita { display: flex; align-items: center; gap: 14px; min-width: 0; }
+    .conta { position: relative; }
+    .conta-botao {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      max-width: 280px;
+      padding: 6px 10px 6px 8px;
+      background: #fff;
+      border: 1px solid var(--cor-borda);
+      border-radius: 999px;
+      font: inherit;
+      font-size: 0.85rem;
+      color: #444;
+      cursor: pointer;
+    }
+    .conta-botao:hover, .conta-botao[aria-expanded="true"] { border-color: var(--cor-principal); color: var(--cor-principal); }
+    .conta-botao .material-symbols-rounded { color: var(--cor-principal); }
+    .conta-seta { transition: transform 0.2s; }
+    .conta-botao[aria-expanded="true"] .conta-seta { transform: rotate(180deg); }
+    .usuario-logado { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+    .conta-menu {
+      position: absolute;
+      right: 0;
+      top: calc(100% + 6px);
+      z-index: 50;
+      min-width: 190px;
+      padding: 6px;
+      background: #fff;
+      border: 1px solid var(--cor-borda);
+      border-radius: 10px;
+      box-shadow: 0 10px 30px -10px rgba(60, 20, 10, 0.25);
+      display: flex;
+      flex-direction: column;
+    }
+    .conta-menu.oculto { display: none; }
+    .conta-menu button {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 10px;
+      background: none;
+      border: none;
+      border-radius: 6px;
+      font: inherit;
+      font-size: 0.88rem;
+      color: #333;
+      text-align: left;
+      cursor: pointer;
+    }
+    .conta-menu button:hover, .conta-menu button:focus-visible { background: #f6ece3; color: var(--cor-principal); outline: none; }
+    .conta-menu .material-symbols-rounded { font-size: 19px; color: #8a7b72; }
+    .registros-topo { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
+    .registros-topo .btn { width: auto; }
+    @media (max-width: 600px) {
+      .topo-direita { width: 100%; justify-content: space-between; }
+      .conta-botao { max-width: 220px; }
+    }
 
     #tela-login {
       max-width: 360px;
@@ -547,12 +605,19 @@
 
       <div style="display:flex;align-items:center;justify-content:space-between;margin:20px 0 16px;flex-wrap:wrap;gap:10px">
         <h1 style="font-size:1.2rem">Painel do Administrador — HEDRA</h1>
-        <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;justify-content:flex-end">
+        <div class="topo-direita">
           <span class="ultima-atualizacao" id="ultima-atualizacao" aria-live="polite"></span>
-          <span class="usuario-logado" id="usuario-logado"></span>
-          <button type="button" class="btn btn-secundario btn-sm btn-com-icone" id="btn-alterar-senha"><span class="material-symbols-rounded" aria-hidden="true">key</span>Alterar senha</button>
-          <button type="button" class="btn btn-secundario btn-sm btn-com-icone" id="btn-sair"><span class="material-symbols-rounded" aria-hidden="true">logout</span>Sair</button>
-          <button class="btn btn-dourado btn-sm btn-com-icone" id="btn-exportar-csv"><span class="material-symbols-rounded" aria-hidden="true">download</span>Exportar CSV</button>
+          <div class="conta">
+            <button type="button" class="conta-botao" id="btn-conta" aria-haspopup="menu" aria-expanded="false" aria-controls="conta-menu">
+              <span class="material-symbols-rounded" aria-hidden="true">account_circle</span>
+              <span class="usuario-logado" id="usuario-logado"></span>
+              <span class="material-symbols-rounded conta-seta" aria-hidden="true">expand_more</span>
+            </button>
+            <div class="conta-menu oculto" id="conta-menu" role="menu">
+              <button type="button" role="menuitem" id="btn-alterar-senha"><span class="material-symbols-rounded" aria-hidden="true">key</span>Alterar senha</button>
+              <button type="button" role="menuitem" id="btn-sair"><span class="material-symbols-rounded" aria-hidden="true">logout</span>Sair</button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -635,7 +700,10 @@
 
       <!-- Tabela -->
       <div class="card" style="margin-top:16px">
-        <h3 style="margin-bottom:12px">Todos os registros</h3>
+        <div class="registros-topo">
+          <h3>Todos os registros</h3>
+          <button class="btn btn-dourado btn-sm btn-com-icone" id="btn-exportar-csv"><span class="material-symbols-rounded" aria-hidden="true">download</span>Exportar CSV</button>
+        </div>
         <div class="filtros-wrapper">
           <input type="text" id="campo-busca" placeholder="Buscar por nome, e-mail, cargo…">
           <select id="filtro-perfil">
@@ -722,6 +790,6 @@
   <script src="js/scoring.js?v=2"></script>
   <script src="js/resultado-content.js?v=2"></script>
   <script src="js/export.js?v=44"></script>
-  <script src="js/admin.js?v=17"></script>
+  <script src="js/admin.js?v=18"></script>
 </body>
 </html>
